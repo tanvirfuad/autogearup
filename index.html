@@ -248,14 +248,9 @@ async function loadEstimate(){
   if(error)return toast(error.message);
   currentEstimate.items=items||[];
   $('#estimateState').textContent='Status: '+currentEstimate.status.toUpperCase();
-  $('#estimateItems').innerHTML=currentEstimate.items.map(i=>`<div class="row flex"><div><div style="font-weight:750">${escapeHtml(i.description)}</div><div class="muted small">${Number(i.quantity)} × ${Number(i.unit_price).toFixed(2)}${i.authorized?' · Authorized':''}</div></div><div class="price">${(Number(i.quantity)*Number(i.unit_price)).toFixed(2)}</div></div>`).join('')||'<div class="muted small">No estimate items yet.</div>';
+  $('#estimateItems').innerHTML=currentEstimate.items.map(i=>`<div class="row flex"><div><div style="font-weight:750">${escapeHtml(i.description)}</div><div class="muted small">${Number(i.quantity)} × $${Number(i.unit_price).toFixed(2)}${i.authorized?' · Authorized':''}</div></div><div class="price">$${(Number(i.quantity)*Number(i.unit_price)).toFixed(2)}</div></div>`).join('')||'<div class="muted small">No estimate items yet.</div>';
   const total=currentEstimate.items.reduce((sum,i)=>sum+Number(i.quantity)*Number(i.unit_price),0);
-  $('#estimateTotal').textContent='const email=$('#staffEmail').value.trim(),role=$('#staffRole').value;const {error}=await sb.rpc('add_shop_member',{member_email:email,member_role:role});$('#staffMsg').classList.remove('hidden');if(error){$('#staffMsg').textContent=error.message}else{$('#staffMsg').textContent=`${email} added as ${role}.`;e.target.reset()}}
-function subscribeRealtime(){if(channel)sb.removeChannel(channel);channel=sb.channel('autogearup-live').on('postgres_changes',{event:'*',schema:'public',table:'repair_orders'},async()=>{await loadJobs()}).subscribe()}
-function escapeHtml(s=''){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-sb.auth.onAuthStateChange((_event,session)=>initialize(session));sb.auth.getSession().then(({data})=>initialize(data.session));
-</script>
-</body></html>+total.toFixed(2);
+  $('#estimateTotal').textContent='$'+total.toFixed(2);
   $('#sendEstimate').disabled=currentEstimate.status==='authorized';
   $('#authorizeEstimate').disabled=currentEstimate.status==='authorized'||!currentEstimate.items.length;
 }
