@@ -48,7 +48,7 @@ textarea,input,select{background:#fff;border:1px solid var(--line);color:var(--t
 <div id="publicEstimate" class="publicEstimate hidden"><div class="publicEstimateInner"><div id="publicEstimateContent" class="card"></div></div></div>
 <div id="auth" class="auth">
   <div class="authbox card">
-    <div class="brand"><div class="logo">AG</div><div><h1>AutoGearUp</h1><div class="muted small">Technician Workspace</div></div></div>
+    <div class="brand"><div class="logo">AG</div><div><h1>AutoGearUp</h1><div class="muted small">Advisor + Technician</div></div></div>
     <h2 id="authTitle">Sign in</h2>
     <div class="muted small">Use your shop account. The first registered account becomes the AutoGearUp demo shop admin.</div>
     <div class="authform">
@@ -64,20 +64,12 @@ textarea,input,select{background:#fff;border:1px solid var(--line);color:var(--t
 
 <div id="app" class="shell hidden">
 <aside class="side">
-  <div class="brand"><div class="logo">AG</div><div><h1>AutoGearUp</h1><div class="muted small">Technician Workspace</div></div></div>
+  <div class="brand"><div class="logo">AG</div><div><h1>AutoGearUp</h1><div class="muted small">Advisor + Technician</div></div></div>
   <div class="card userbar"><div><div id="who" style="font-weight:800"></div><div id="role" class="muted small"></div></div><button id="logout" class="btn">Sign out</button></div>
   <div class="navLabel">Workspace</div>
   <div class="tabs">
-    <button class="tab on" data-tab="overview"><span class="navIcon">▦</span>Dashboard</button>
-    <button class="tab" data-tab="jobs"><span class="navIcon">⌁</span>Technician</button>
     <button id="advisorTabBtn" class="tab hidden" data-tab="advisor"><span class="navIcon">◎</span>Service Advisor</button>
-    <button class="tab" data-tab="calls"><span class="navIcon">☎</span>Calls</button>
-    <button class="tab" data-tab="appointments"><span class="navIcon">◷</span>Appointments</button>
-    <button id="suppliersTabBtn" class="tab hidden" data-tab="suppliers"><span class="navIcon">◇</span>Suppliers & Quotes</button>
-    <button class="tab" data-tab="messages"><span class="navIcon">✉</span>Messages</button>
-    <button id="settingsTabBtn" class="tab hidden" data-tab="settings"><span class="navIcon">⚙</span>AI Settings</button>
-    <button id="newRoTabBtn" class="tab hidden" data-tab="newro"><span class="navIcon">＋</span>New Repair Order</button>
-    <button id="staffTabBtn" class="tab hidden" data-tab="staff"><span class="navIcon">♙</span>Staff</button>
+    <button class="tab" data-tab="jobs"><span class="navIcon">⌁</span>Technician</button>
   </div>
   <div class="queueLabel"><span>Repair Order Queue</span><span id="queueCount"></span></div>
   <input id="search" class="search" placeholder="Search repair orders">
@@ -88,8 +80,8 @@ textarea,input,select{background:#fff;border:1px solid var(--line);color:var(--t
 </aside>
 
 <main class="main">
-  <div class="top"><div><h2 id="pageTitle">Dashboard</h2><div id="pageSubtitle" class="muted small">Shop activity and live repair order status</div></div><div class="syncPill"><span id="sync">Connected</span></div></div>
-  <section id="overviewTab">
+  <div class="top"><div><h2 id="pageTitle">AutoGearUp</h2><div id="pageSubtitle" class="muted small">Advisor and technician workflow</div></div><div class="syncPill"><span id="sync">Connected</span></div></div>
+  <section id="overviewTab" class="hidden">
     <div class="overviewHero">
       <div><h3>Good morning</h3><div class="muted">Here’s what is happening in your shop right now.</div></div>
       <button id="overviewNewRo" class="btn primary hidden">+ New Repair Order</button>
@@ -140,6 +132,10 @@ textarea,input,select{background:#fff;border:1px solid var(--line);color:var(--t
     </div>
   </section>
   <section id="advisorTab" class="hidden">
+    <div class="overviewHero">
+      <div><h3>Service Advisor</h3><div class="muted">Intake, estimates, authorization and technician assignment.</div></div>
+      <button id="advisorNewRo" class="btn primary">+ New Repair Order</button>
+    </div>
     <div class="stats">
       <div class="stat"><div class="muted small">WAITING</div><strong id="statWaiting">0</strong></div>
       <div class="stat"><div class="muted small">INSPECTION</div><strong id="statInspection">0</strong></div>
@@ -161,10 +157,10 @@ textarea,input,select{background:#fff;border:1px solid var(--line);color:var(--t
           <div style="display:grid;grid-template-columns:1fr auto;gap:9px"><select id="advisorTech"></select><button id="assignTech" class="btn primary">Assign</button></div>
         </div>
         <div class="card">
-          <div class="sectionTitle"><div><h4>Estimate</h4><div id="estimateState" class="muted small"></div></div><div style="display:flex;gap:7px"><button id="shareEstimate" class="btn">Share Link</button><button id="sendEstimate" class="btn">Send Estimate</button><button id="authorizeEstimate" class="btn primary">Authorize</button></div></div>
+          <div class="sectionTitle"><div><h4>Estimate</h4><div id="estimateState" class="muted small"></div></div><div style="display:flex;gap:7px"><button id="sendEstimate" class="btn">Send Estimate</button><button id="authorizeEstimate" class="btn primary">Authorize</button></div></div>
           <form id="estimateItemForm" class="three" style="margin-top:12px"><input id="estimateDesc" required placeholder="Service / repair"><input id="estimateQty" type="number" step="0.01" min="0.01" value="1" placeholder="Qty"><div style="display:grid;grid-template-columns:1fr auto;gap:8px"><input id="estimatePrice" type="number" step="0.01" min="0" required placeholder="Unit price"><button class="btn primary">Add</button></div></form>
           <div id="estimateItems" class="list" style="margin-top:12px"></div>
-          <div class="estimateTotal"><span>Total</span><span id="estimateTotal" class="price">$0.00</span></div><div id="estimateShareBox" class="shareBox hidden" style="margin-top:10px"></div>
+          <div class="estimateTotal"><span>Total</span><span id="estimateTotal" class="price">$0.00</span></div>
         </div>
         <div class="card"><div class="sectionTitle"><h4>Advisor Activity</h4></div><div id="advisorActivity" class="list"></div></div>
       </div>
@@ -203,6 +199,7 @@ textarea,input,select{background:#fff;border:1px solid var(--line);color:var(--t
   </section>
   <section id="settingsTab" class="hidden"><div class="card" style="max-width:850px"><div class="sectionTitle"><div><h4>AI Receptionist Settings</h4><div class="muted small">Shop-specific booking and handoff rules</div></div></div><form id="settingsForm" class="moduleForm"><div class="three"><input id="settingsTimezone" placeholder="Timezone"><input id="settingsSlot" type="number" min="15" placeholder="Appointment minutes"><input id="settingsLead" type="number" min="0" placeholder="Lead time minutes"></div><input id="settingsTransfer" placeholder="Human transfer phone"><textarea id="settingsGreeting" rows="3" placeholder="AI greeting"></textarea><textarea id="settingsSms" rows="3" placeholder="SMS confirmation template"></textarea><textarea id="settingsEmail" rows="4" placeholder="Email confirmation template"></textarea><button class="btn primary">Save Settings</button></form></div></section>
   <section id="newroTab" class="hidden">
+    <div style="margin-bottom:12px"><button id="backToAdvisor" class="btn">← Back to Service Advisor</button></div>
     <div class="card"><h3>Create Vehicle + Repair Order</h3><div class="muted small">For advisors and admins. This creates a persistent vehicle and RO in Supabase.</div>
       <form id="newRoForm" class="stack" style="margin-top:16px">
         <div class="three"><input id="customerName" required placeholder="Customer name"><input id="customerPhone" placeholder="Phone"><input id="customerEmail" type="email" placeholder="Email"></div>
@@ -249,15 +246,12 @@ async function initialize(session){
     membership=members[0];
     $('#who').textContent=user.user_metadata?.full_name||user.email;
     $('#role').textContent=membership.role.toUpperCase()+' · '+membership.shop_name;
-    $('#staffTabBtn').classList.toggle('hidden',membership.role!=='admin');
-    $('#newRoTabBtn').classList.toggle('hidden',!['admin','advisor'].includes(membership.role));
     $('#advisorTabBtn').classList.toggle('hidden',!['admin','advisor'].includes(membership.role));
-    $('#suppliersTabBtn').classList.toggle('hidden',!['admin','advisor'].includes(membership.role));
-    $('#settingsTabBtn').classList.toggle('hidden',!['admin','advisor'].includes(membership.role));
-    $('#overviewNewRo').classList.toggle('hidden',!['admin','advisor'].includes(membership.role));
     await loadStaff();
     await loadJobs();
     subscribeRealtime();
+    const startTab=['admin','advisor'].includes(membership.role)?'advisor':'jobs';
+    document.querySelector('[data-tab="'+startTab+'"]')?.click();
   }catch(e){toast(e.message);$('#role').textContent='No shop access'}
 }
 async function loadJobs(){
@@ -301,10 +295,18 @@ $('#ensureInspection').onclick=ensureInspection;
 async function ensureInspection(){if(!selected)return;let {data:ins}=await sb.from('inspections').select('*').eq('repair_order_id',selected.id).order('started_at',{ascending:false}).limit(1).maybeSingle();if(!ins){const created=await sb.from('inspections').insert({repair_order_id:selected.id,technician_id:user.id}).select().single();if(created.error)return toast(created.error.message);ins=created.data;const rows=inspectionDefaults.map(([item_key,label])=>({inspection_id:ins.id,item_key,label,condition:'not_checked'}));const i=await sb.from('inspection_items').insert(rows);if(i.error)return toast(i.error.message)}await setStatus('Inspection');await loadInspection()}
 async function loadInspection(){const {data:ins}=await sb.from('inspections').select('id,status').eq('repair_order_id',selected.id).order('started_at',{ascending:false}).limit(1).maybeSingle();if(!ins){$('#inspectionList').innerHTML='<div class="muted small">Start the inspection to load checklist.</div>';return}const {data,error}=await sb.from('inspection_items').select('*').eq('inspection_id',ins.id).order('created_at');if(error)return toast(error.message);$('#inspectionList').innerHTML=(data||[]).map(i=>`<label class="row flex"><div><div style="font-weight:750">${escapeHtml(i.label)}</div><div class="muted small">${i.condition==='pass'?'Completed':'Not checked'}</div></div><input class="inspectionCheck" data-id="${i.id}" type="checkbox" ${i.condition==='pass'?'checked':''}></label>`).join('');document.querySelectorAll('.inspectionCheck').forEach(c=>c.onchange=async()=>{const {error}=await sb.from('inspection_items').update({condition:c.checked?'pass':'not_checked'}).eq('id',c.dataset.id);if(error){c.checked=!c.checked;toast(error.message)}else loadInspection()})}
 
-const tabTitles={overview:['Dashboard','Shop activity and live repair order status'],jobs:['Technician','Vehicle queue and technician workflow'],advisor:['Service Advisor','Intake, estimates, authorization and assignment'],calls:['Calls','Call logs, transcripts, recordings and AI summaries'],appointments:['Appointments','Booking calendar and appointment status'],suppliers:['Suppliers & Quotes','Parts sourcing, supplier responses and quote comparison'],messages:['Messages','SMS, WhatsApp and email communication history'],settings:['AI Settings','Receptionist booking rules and human handoff'],newro:['New Repair Order','Create a customer, vehicle and repair order'],staff:['Staff','Manage shop users and roles']};
-const tabIds=['overview','jobs','advisor','calls','appointments','suppliers','messages','settings','newro','staff'];
-document.querySelectorAll('.tab').forEach(b=>b.onclick=async()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');const tab=b.dataset.tab;tabIds.forEach(id=>$('#'+id+'Tab')?.classList.toggle('hidden',id!==tab));const copy=tabTitles[tab]||tabTitles.overview;$('#pageTitle').textContent=copy[0];$('#pageSubtitle').textContent=copy[1];if(tab==='advisor')renderAdvisorQueue();if(tab==='overview')renderOverview();if(tab==='calls')await loadCalls();if(tab==='appointments')await loadAppointments();if(tab==='suppliers'){await loadSuppliers();await loadQuotes();}if(tab==='messages')await loadMessages();if(tab==='settings')await loadSettings();});
-$('#newRoForm').onsubmit=async e=>{e.preventDefault();const msg=$('#newRoMsg');msg.classList.remove('hidden');msg.textContent='Creating...';const vehicle={shop_id:membership.shop_id,customer_name:$('#customerName').value.trim(),customer_phone:$('#customerPhone').value.trim()||null,customer_email:$('#customerEmail').value.trim()||null,year:Number($('#vYear').value),make:$('#vMake').value.trim(),model:$('#vModel').value.trim(),trim:$('#vTrim').value.trim()||null,plate:$('#vPlate').value.trim()||null,vin:$('#vVin').value.trim()||null,mileage:$('#vMileage').value?Number($('#vMileage').value):null};const vr=await sb.from('vehicles').insert(vehicle).select('id').single();if(vr.error){msg.textContent=vr.error.message;return}const ro={shop_id:membership.shop_id,vehicle_id:vr.data.id,ro_number:$('#roNumber').value.trim(),bay:$('#roBay').value.trim()||null,customer_concern:$('#roConcern').value.trim()||null,status:'Waiting'};const rr=await sb.from('repair_orders').insert(ro).select('id').single();if(rr.error){msg.textContent=rr.error.message;return}msg.textContent='Repair order created.';e.target.reset();await loadJobs();selected=jobs.find(j=>j.id===rr.data.id)||null;document.querySelector('[data-tab="jobs"]').click();if(selected)await renderDetail();toast('New repair order created')};
+const tabTitles={jobs:['Technician','Vehicle queue and technician workflow'],advisor:['Service Advisor','Intake, estimates, authorization and assignment'],newro:['New Repair Order','Advisor intake and repair order creation']};
+function showWorkspace(tab){
+  ['overview','jobs','advisor','calls','appointments','suppliers','messages','settings','newro','staff'].forEach(id=>$('#'+id+'Tab')?.classList.add('hidden'));
+  $('#'+tab+'Tab')?.classList.remove('hidden');
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.tab===tab));
+  const copy=tabTitles[tab]||tabTitles.jobs;$('#pageTitle').textContent=copy[0];$('#pageSubtitle').textContent=copy[1];
+  if(tab==='advisor')renderAdvisorQueue();
+}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showWorkspace(b.dataset.tab));
+$('#advisorNewRo').onclick=()=>showWorkspace('newro');
+$('#backToAdvisor').onclick=()=>showWorkspace('advisor');
+$('#newRoForm').onsubmit=async e=>{e.preventDefault();const msg=$('#newRoMsg');msg.classList.remove('hidden');msg.textContent='Creating...';const vehicle={shop_id:membership.shop_id,customer_name:$('#customerName').value.trim(),customer_phone:$('#customerPhone').value.trim()||null,customer_email:$('#customerEmail').value.trim()||null,year:Number($('#vYear').value),make:$('#vMake').value.trim(),model:$('#vModel').value.trim(),trim:$('#vTrim').value.trim()||null,plate:$('#vPlate').value.trim()||null,vin:$('#vVin').value.trim()||null,mileage:$('#vMileage').value?Number($('#vMileage').value):null};const vr=await sb.from('vehicles').insert(vehicle).select('id').single();if(vr.error){msg.textContent=vr.error.message;return}const ro={shop_id:membership.shop_id,vehicle_id:vr.data.id,ro_number:$('#roNumber').value.trim(),bay:$('#roBay').value.trim()||null,customer_concern:$('#roConcern').value.trim()||null,status:'Waiting'};const rr=await sb.from('repair_orders').insert(ro).select('id').single();if(rr.error){msg.textContent=rr.error.message;return}msg.textContent='Repair order created.';e.target.reset();await loadJobs();advisorSelected=jobs.find(j=>j.id===rr.data.id)||null;showWorkspace('advisor');if(advisorSelected){renderAdvisorQueue();await renderAdvisorDetail()}toast('New repair order created')};
 
 function renderOverview(){
   if(!jobs)return;
@@ -379,7 +381,7 @@ $('#estimateItemForm').onsubmit=async e=>{
   const {error}=await sb.from('estimate_items').insert(item);if(error)return toast(error.message);
   e.target.reset();$('#estimateQty').value=1;toast('Estimate item added');await loadEstimate();
 };
-$('#sendEstimate').onclick=async()=>{if(!currentEstimate||!advisorSelected)return;const url=await createEstimateShare();const {error}=await sb.rpc('send_estimate',{target_estimate:currentEstimate.id});if(error)return toast(error.message);const v=advisorSelected.vehicle||{};if(url&&v.customer_phone)await sb.from('message_logs').insert({shop_id:membership.shop_id,repair_order_id:advisorSelected.id,channel:'sms',direction:'outbound',contact_name:v.customer_name||null,address:v.customer_phone,body:'Your repair estimate is ready: '+url,status:'queued'});if(url&&v.customer_email)await sb.from('message_logs').insert({shop_id:membership.shop_id,repair_order_id:advisorSelected.id,channel:'email',direction:'outbound',contact_name:v.customer_name||null,address:v.customer_email,body:'Your repair estimate is ready: '+url,status:'queued'});toast('Estimate marked sent and message queued');await loadEstimate();await loadAdvisorActivity()};
+$('#sendEstimate').onclick=async()=>{if(!currentEstimate)return;const {error}=await sb.rpc('send_estimate',{target_estimate:currentEstimate.id});if(error)return toast(error.message);toast('Estimate marked sent');await loadEstimate();await loadAdvisorActivity()};
 $('#authorizeEstimate').onclick=async()=>{if(!currentEstimate)return;const {error}=await sb.rpc('authorize_estimate',{target_estimate:currentEstimate.id});if(error)return toast(error.message);toast('Estimate authorized and services created');await loadEstimate();await loadAdvisorActivity();if(selected?.id===advisorSelected.id)await loadServices()};
 async function loadAdvisorActivity(){
   if(!advisorSelected)return;
@@ -438,7 +440,6 @@ $('#decodeVin').onclick=async()=>{const vin=$('#vVin').value.trim();if(vin.lengt
 async function createEstimateShare(){
   if(!currentEstimate)return null;const {data,error}=await sb.rpc('create_estimate_share_link',{target_estimate:currentEstimate.id});if(error){toast(error.message);return null}const url=location.origin+location.pathname+'?estimate='+data;$('#estimateShareBox').textContent=url;$('#estimateShareBox').classList.remove('hidden');return url;
 }
-$('#shareEstimate').onclick=async()=>{const url=await createEstimateShare();if(url){try{await navigator.clipboard.writeText(url);toast('Estimate link copied')}catch{toast('Estimate link created')}}};
 async function loadSharedEstimateIfPresent(){
   const token=new URLSearchParams(location.search).get('estimate');if(!token)return false;const {data,error}=await sb.rpc('get_shared_estimate',{share_token:token});$('#auth').classList.add('hidden');$('#app').classList.add('hidden');$('#publicEstimate').classList.remove('hidden');if(error||!data){$('#publicEstimateContent').innerHTML='<h2>Estimate unavailable</h2><p class="muted">This estimate link is invalid or expired.</p>';return true}const items=data.items||[];$('#publicEstimateContent').innerHTML=`<div class="publicEstimateHeader"><div><div class="brand" style="margin:0 0 12px"><div class="logo">AG</div><div><h1>${escapeHtml(data.shop?.name||'AutoGearUp')}</h1><div class="muted small">Repair Estimate</div></div></div><h1>${escapeHtml(((data.vehicle?.year||'')+' '+(data.vehicle?.make||'')+' '+(data.vehicle?.model||'')+' '+(data.vehicle?.trim||'')).trim())}</h1><div class="muted">RO #${escapeHtml(data.ro_number||'')}</div></div><span class="pill">${escapeHtml(data.estimate_status||'draft')}</span></div><table><thead><tr><th>Description</th><th>Qty</th><th>Unit</th><th>Amount</th></tr></thead><tbody>${items.map(i=>`<tr><td>${escapeHtml(i.description)}</td><td>${Number(i.quantity)}</td><td>$${Number(i.unit_price).toFixed(2)}</td><td>$${(Number(i.quantity)*Number(i.unit_price)).toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="total">Total: $${Number(data.total||0).toFixed(2)}</div>`;return true;
 }
@@ -446,6 +447,6 @@ async function loadSharedEstimateIfPresent(){
 $('#staffForm').onsubmit=async e=>{e.preventDefault();const email=$('#staffEmail').value.trim(),role=$('#staffRole').value;const {error}=await sb.rpc('add_shop_member',{member_email:email,member_role:role});$('#staffMsg').classList.remove('hidden');if(error){$('#staffMsg').textContent=error.message}else{$('#staffMsg').textContent=`${email} added as ${role}.`;e.target.reset()}}
 function subscribeRealtime(){if(channel)sb.removeChannel(channel);channel=sb.channel('autogearup-live').on('postgres_changes',{event:'*',schema:'public',table:'repair_orders'},async()=>{await loadJobs()}).on('postgres_changes',{event:'*',schema:'public',table:'appointments'},async()=>{if(!$('#appointmentsTab').classList.contains('hidden'))await loadAppointments()}).on('postgres_changes',{event:'*',schema:'public',table:'call_logs'},async()=>{if(!$('#callsTab').classList.contains('hidden'))await loadCalls()}).subscribe()}
 function escapeHtml(s=''){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-loadSharedEstimateIfPresent().then(shared=>{if(!shared){sb.auth.onAuthStateChange((_event,session)=>initialize(session));sb.auth.getSession().then(({data})=>initialize(data.session));}});
+sb.auth.onAuthStateChange((_event,session)=>initialize(session));sb.auth.getSession().then(({data})=>initialize(data.session));
 </script>
 </body></html>
