@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AutoGearUp</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -43,7 +43,101 @@ textarea,input,select{background:#fff;border:1px solid var(--line);color:var(--t
 .overviewHero{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}.overviewHero h3{font-size:24px;margin:0 0 5px;letter-spacing:-.035em}.overviewGrid{display:grid;grid-template-columns:1.4fr .8fr;gap:16px}.overviewTable{width:100%;border-collapse:collapse}.overviewTable th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;padding:0 10px 10px;border-bottom:1px solid var(--line)}.overviewTable td{padding:11px 10px;border-bottom:1px solid #f0f1f3;font-size:12px}.overviewTable tr:last-child td{border-bottom:0}.metricIcon{width:30px;height:30px;border-radius:8px;background:#f3f4f6;display:grid;place-items:center;font-size:14px;margin-bottom:12px}
 .moduleGrid{display:grid;grid-template-columns:minmax(320px,.75fr) minmax(0,1.25fr);gap:16px}.moduleForm{display:grid;gap:9px}.tableWrap{overflow:auto}.dataTable{width:100%;border-collapse:collapse}.dataTable th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;padding:0 9px 9px;border-bottom:1px solid var(--line)}.dataTable td{padding:10px 9px;border-bottom:1px solid #f0f1f3;font-size:12px;vertical-align:top}.dataTable tr:last-child td{border-bottom:0}.pill{display:inline-flex;padding:3px 7px;border-radius:999px;background:#f3f4f6;color:#4b5563;font-size:10px;font-weight:650}.quoteCard{border:1px solid var(--line);border-radius:11px;padding:12px;background:#fff}.quoteResponses{display:grid;gap:6px;margin-top:10px}.quoteResponse{display:grid;grid-template-columns:1.2fr .7fr .8fr;gap:8px;padding:8px 9px;background:#f9fafb;border-radius:8px;font-size:11px}.shareBox{padding:9px 10px;border:1px solid var(--line);background:#f9fafb;border-radius:9px;font-size:11px;word-break:break-all}.publicEstimate{min-height:100vh;background:#f5f6f8;padding:40px 16px}.publicEstimateInner{max-width:760px;margin:auto}.publicEstimateHeader{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:18px}.publicEstimate h1{font-size:24px;margin:0}.publicEstimate table{width:100%;border-collapse:collapse}.publicEstimate th,.publicEstimate td{padding:12px 8px;border-bottom:1px solid var(--line);text-align:left}.publicEstimate th{font-size:10px;color:#9ca3af;text-transform:uppercase}.publicEstimate .total{font-size:20px;font-weight:800;text-align:right;margin-top:18px}
 @media(max-width:1100px){.shell{grid-template-columns:240px 1fr}.workflow{grid-template-columns:1fr 1fr}.grid2,.overviewGrid,.moduleGrid{grid-template-columns:1fr}.advisorGrid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:760px){.advisorViewBar{align-items:flex-start;flex-direction:column}.statusManagerForm{grid-template-columns:1fr 70px}.statusManagerForm .btn{grid-column:1/-1}.shell{display:block}.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}.brand{margin-bottom:14px}.tabs{grid-template-columns:repeat(2,1fr)}.tab{justify-content:center}.navLabel{display:none}.queueLabel{margin-top:12px}.vehicleList{display:flex;overflow:auto}.vehicle{min-width:220px}.main{padding:0 14px 28px}.top{height:62px;margin-bottom:16px}.workflow{grid-template-columns:1fr 1fr}.hero{display:block}.grid2{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.three{grid-template-columns:1fr}.overviewHero{display:block}.overviewHero .btn{margin-top:10px}}
+.mobileQueueToggle,.mobileStatusControl{display:none}
+@media(max-width:760px){
+  html{scroll-behavior:smooth}
+  body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  button,input,textarea,select{font-size:16px}
+  .btn{min-height:44px;padding:10px 12px;font-size:13px}
+  input,textarea,select{min-height:44px;padding:10px 11px}
+  .shell{display:block;min-height:auto}
+  .side{position:sticky;top:0;height:auto;max-height:none;border-right:0;border-bottom:1px solid var(--line);padding:10px 12px;background:rgba(255,255,255,.97);backdrop-filter:blur(16px);z-index:40;overflow:visible}
+  .side>.brand{margin:0 0 8px;display:inline-flex}
+  .side>.brand .logo{width:32px;height:32px;border-radius:9px}
+  .side>.brand h1{font-size:15px}
+  .side>.brand .small{display:none}
+  .userbar{position:absolute;right:12px;top:9px;margin:0;padding:5px 6px 5px 9px;width:auto;max-width:56%;border:0;background:#f5f6f8}
+  .userbar>div{min-width:0}
+  .userbar #who{font-size:11px;max-width:110px}
+  .userbar #role{font-size:8px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .userbar #logout{min-height:32px;padding:5px 7px;font-size:10px}
+  .navLabel{display:none}
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:60;margin:0;display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:rgba(255,255,255,.97);border-top:1px solid var(--line);box-shadow:0 -8px 24px rgba(16,24,40,.08);backdrop-filter:blur(16px)}
+  .tab{justify-content:center;min-height:48px;padding:8px 10px;border:1px solid transparent;font-size:12px}
+  .tab.on{background:#111827;color:#fff;border-color:#111827}
+  .tab.on .navIcon{color:#fff}
+  .mobileQueueToggle{display:flex;width:100%;align-items:center;justify-content:space-between;min-height:42px;margin-top:4px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 10px;font-weight:700;color:#374151}
+  .mobileQueueToggle .small{font-size:10px}
+  #mobileQueuePanel{display:none;padding-top:9px}
+  #mobileQueuePanel.open{display:block}
+  .queueLabel{margin-top:0;padding:0 2px 7px}
+  .search{min-height:42px;margin-bottom:7px;font-size:16px}
+  .filters{gap:6px;margin-bottom:8px;padding-bottom:3px;scrollbar-width:none}
+  .filters::-webkit-scrollbar{display:none}
+  .filter{min-height:36px;padding:7px 10px;font-size:11px}
+  .vehicleList{display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;padding-bottom:4px;scrollbar-width:none}
+  .vehicleList::-webkit-scrollbar{display:none}
+  .vehicle{min-width:78vw;max-width:320px;scroll-snap-align:start;padding:11px}
+  .main{padding:0 12px 24px;width:100%;overflow:hidden}
+  .top{position:static;height:auto;min-height:58px;margin-bottom:12px;padding:12px 2px 10px;background:transparent;border-bottom:0;backdrop-filter:none}
+  .top h2{font-size:19px}
+  .top .small{font-size:11px}
+  .syncPill{padding:5px 8px;font-size:9px}
+  .overviewHero{display:block;margin-bottom:12px}
+  .overviewHero h3{font-size:21px}
+  .overviewHero .btn{width:100%;margin-top:10px}
+  .card{padding:14px;border-radius:12px}
+  .hero{display:block;padding:14px;margin-bottom:10px}
+  .hero h3{font-size:19px}
+  .meta{gap:5px}
+  .meta span{font-size:10px}
+  .workflow{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+  .flow{min-height:72px;padding:12px}
+  .flow strong{font-size:12px}
+  .grid2,.overviewGrid,.moduleGrid,.advisorGrid{grid-template-columns:1fr;gap:10px}
+  .advisorQueue{max-height:none}
+  .advisorJob{padding:12px}
+  .advisorViewBar{align-items:stretch;flex-direction:column;gap:8px;margin-bottom:10px}
+  .advisorViewBar>div:first-child{width:100%;display:grid!important;grid-template-columns:1fr auto}
+  .viewSwitch{width:100%;display:grid;grid-template-columns:1fr 1fr}
+  .viewSwitch button{min-height:40px;padding:8px 10px}
+  #manageStatusesBtn{min-height:40px;white-space:nowrap}
+  .stats{display:flex;gap:8px;overflow-x:auto;margin:0 -2px 12px;padding:0 2px 4px;scroll-snap-type:x proximity;scrollbar-width:none}
+  .stats::-webkit-scrollbar{display:none}
+  .stat{min-width:132px;scroll-snap-align:start;padding:12px 13px}
+  .stat strong{font-size:21px;margin-top:5px}
+  .statusManager{padding:13px}
+  .statusManagerForm{grid-template-columns:1fr 64px}
+  .statusManagerForm .btn{grid-column:1/-1}
+  .statusManagerRow{grid-template-columns:1fr;gap:8px}
+  .statusManagerActions{justify-content:flex-end}
+  .statusManagerActions .btn{min-height:38px}
+  .kanbanWrap{margin:0 -12px;padding:0 12px 12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-left:12px;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .kanbanWrap::-webkit-scrollbar{display:none}
+  .kanbanBoard{gap:10px}
+  .kanbanColumn{width:calc(100vw - 34px);max-width:430px;flex:0 0 calc(100vw - 34px);min-height:390px;scroll-snap-align:start;padding:9px}
+  .kanbanCard{cursor:pointer;padding:12px}
+  .kanbanCard[draggable="true"]{cursor:pointer}
+  .mobileStatusControl{display:block;margin-top:9px;padding-top:9px;border-top:1px solid #f0f1f3}
+  .mobileStatusControl label{display:block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:5px}
+  .mobileStatusSelect{width:100%;min-height:40px;font-size:13px;background:#f9fafb}
+  .kanbanMeta{margin-top:8px}
+  .three{grid-template-columns:1fr!important}
+  .sectionTitle{align-items:flex-start}
+  .row.flex{align-items:flex-start}
+  .estimateTotal{font-size:15px}
+  .empty{min-height:260px}
+  .toast{left:12px;right:12px;bottom:calc(82px + env(safe-area-inset-bottom));text-align:center}
+  .auth{padding:16px}
+  .authbox{padding:20px}
+}
+@media(max-width:430px){
+  .workflow{grid-template-columns:1fr}
+  .flow{min-height:60px}
+  .userbar #role{display:none}
+  .userbar #who{max-width:92px}
+  .kanbanColumn{width:calc(100vw - 26px);flex-basis:calc(100vw - 26px)}
+}
 </style>
 </head>
 <body>
@@ -73,10 +167,13 @@ textarea,input,select{background:#fff;border:1px solid var(--line);color:var(--t
     <button id="advisorTabBtn" class="tab hidden" data-tab="advisor"><span class="navIcon">◎</span>Service Advisor</button>
     <button class="tab" data-tab="jobs"><span class="navIcon">⌁</span>Technician</button>
   </div>
-  <div class="queueLabel"><span>Repair Order Queue</span><span id="queueCount"></span></div>
-  <input id="search" class="search" placeholder="Search repair orders">
-  <div id="statusFilters" class="filters"></div>
-  <div id="vehicleList" class="vehicleList"></div>
+  <button id="mobileQueueToggle" type="button" class="mobileQueueToggle"><span>Repair Order Queue</span><span class="small"><span id="mobileQueueCount">0</span> jobs ▾</span></button>
+  <div id="mobileQueuePanel">
+    <div class="queueLabel"><span>Repair Order Queue</span><span id="queueCount"></span></div>
+    <input id="search" class="search" placeholder="Search repair orders">
+    <div id="statusFilters" class="filters"></div>
+    <div id="vehicleList" class="vehicleList"></div>
+  </div>
 </aside>
 
 <main class="main">
@@ -277,14 +374,14 @@ async function loadJobs(){
   $('#sync').textContent='Syncing...';
   const {data,error}=await sb.from('repair_orders').select('id,ro_number,bay,status,customer_concern,updated_at,assigned_technician_id,promised_at,vehicle:vehicles(id,customer_name,customer_phone,customer_email,year,make,model,trim,plate,mileage,vin)').eq('shop_id',membership.shop_id).order('opened_at',{ascending:false});
   if(error){toast(error.message);return}
-  jobs=data||[];renderQueue();renderAdvisorQueue();renderAdvisorBoard();renderOverview();$('#sync').textContent='Connected';if($('#queueCount'))$('#queueCount').textContent=jobs.length;
+  jobs=data||[];renderQueue();renderAdvisorQueue();renderAdvisorBoard();renderOverview();$('#sync').textContent='Connected';if($('#queueCount'))$('#queueCount').textContent=jobs.length;if($('#mobileQueueCount'))$('#mobileQueueCount').textContent=jobs.length;
   if(selected){selected=jobs.find(x=>x.id===selected.id)||null;if(selected)await renderDetail()}
 }
 function renderQueue(){
   const q=$('#search').value.toLowerCase();
   const list=jobs.filter(j=>(filter==='All'||j.status===filter)&&(`${j.ro_number} ${j.vehicle?.year||''} ${j.vehicle?.make||''} ${j.vehicle?.model||''} ${j.vehicle?.plate||''}`).toLowerCase().includes(q));
   $('#vehicleList').innerHTML=list.map(j=>`<div class="vehicle ${selected?.id===j.id?'on':''}" data-id="${j.id}"><div class="vrow"><div><div class="vname">${j.vehicle?.year||''} ${j.vehicle?.make||''} ${j.vehicle?.model||''} ${j.vehicle?.trim||''}</div><div class="muted small">RO #${j.ro_number} · ${j.bay||'No bay'}</div></div><span class="tag">${j.vehicle?.plate||'—'}</span></div><div class="status ${statusClass(j.status)}">${j.status}</div></div>`).join('')||'<div class="muted small">No matching jobs.</div>';
-  document.querySelectorAll('.vehicle').forEach(el=>el.onclick=async()=>{selected=jobs.find(j=>j.id===el.dataset.id);renderQueue();await renderDetail()});
+  document.querySelectorAll('.vehicle').forEach(el=>el.onclick=async()=>{selected=jobs.find(j=>j.id===el.dataset.id);renderQueue();await renderDetail();if(isMobile()){setMobileQueue(false);setTimeout(()=>$('#detail')?.scrollIntoView({behavior:'smooth',block:'start'}),50)}});
 }
 async function renderDetail(){
   if(!selected){$('#empty').classList.remove('hidden');$('#detail').classList.add('hidden');return}
@@ -322,6 +419,7 @@ async function loadInspection(){const {data:ins}=await sb.from('inspections').se
 
 const tabTitles={jobs:['Technician','Vehicle queue and technician workflow'],advisor:['Service Advisor','Intake, estimates, authorization and assignment'],newro:['New Repair Order','Advisor intake and repair order creation']};
 function showWorkspace(tab){
+  if(isMobile())setMobileQueue(false);
   ['overview','jobs','advisor','calls','appointments','suppliers','messages','settings','newro','staff'].forEach(id=>$('#'+id+'Tab')?.classList.add('hidden'));
   $('#'+tab+'Tab')?.classList.remove('hidden');
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.tab===tab));
@@ -373,6 +471,18 @@ $('#manageStatusesBtn').onclick=()=>{$('#statusManager').classList.toggle('hidde
 $('#closeStatusManager').onclick=()=>$('#statusManager').classList.add('hidden');
 $('#statusManagerForm').onsubmit=async e=>{e.preventDefault();const name=$('#newStatusName').value.trim(),color=$('#newStatusColor').value;const {error}=await sb.rpc('create_workflow_status',{target_name:name,target_color:color});if(error)return toast(error.message);e.target.reset();$('#newStatusColor').value='#7c3aed';toast('Status added');await loadWorkflowStatuses()};
 
+
+function isMobile(){return window.matchMedia('(max-width:760px)').matches}
+function setMobileQueue(open){
+  const panel=$('#mobileQueuePanel'),btn=$('#mobileQueueToggle');
+  if(!panel||!btn)return;
+  panel.classList.toggle('open',!!open);
+  const count=$('#mobileQueueCount')?.textContent||jobs.length||0;
+  btn.innerHTML='<span>Repair Order Queue</span><span class="small">'+count+' jobs '+(open?'▴':'▾')+'</span>';
+}
+$('#mobileQueueToggle').onclick=()=>setMobileQueue(!$('#mobileQueuePanel').classList.contains('open'));
+window.addEventListener('resize',()=>{if(!isMobile())$('#mobileQueuePanel')?.classList.remove('open')});
+
 async function loadStaff(){
   if(!membership)return;
   const {data,error}=await sb.rpc('list_shop_staff',{target_shop:membership.shop_id});
@@ -385,7 +495,7 @@ function renderAdvisorQueue(){
   jobs.forEach(j=>{if(counts[j.status]!==undefined)counts[j.status]++});
   $('#statWaiting').textContent=counts.Waiting;$('#statInspection').textContent=counts.Inspection;$('#statWorking').textContent=counts['Work in Progress'];$('#statParts').textContent=counts['Waiting for Parts'];$('#statCompleted').textContent=counts['Work Completed'];$('#advisorCount').textContent=jobs.length+' ROs';
   $('#advisorQueue').innerHTML=jobs.map(j=>{const v=j.vehicle||{};return `<div class="advisorJob ${advisorSelected?.id===j.id?'on':''}" data-advisor-id="${j.id}"><div class="vrow"><div><div class="vname">RO #${j.ro_number} · ${v.year||''} ${v.make||''} ${v.model||''}</div><div class="muted small">${escapeHtml(v.customer_name||'No customer')} · ${j.bay||'No bay'}</div></div><span class="tag">${j.status}</span></div></div>`}).join('')||'<div class="muted small">No repair orders.</div>';
-  document.querySelectorAll('[data-advisor-id]').forEach(el=>el.onclick=async()=>{advisorSelected=jobs.find(j=>j.id===el.dataset.advisorId);renderAdvisorQueue();await renderAdvisorDetail()});
+  document.querySelectorAll('[data-advisor-id]').forEach(el=>el.onclick=async()=>{advisorSelected=jobs.find(j=>j.id===el.dataset.advisorId);renderAdvisorQueue();await renderAdvisorDetail();if(isMobile())setTimeout(()=>$('#advisorDetail')?.scrollIntoView({behavior:'smooth',block:'start'}),50)});
 }
 
 function boardStatuses(){return workflowStatuses.map(s=>({id:s.id,status:s.name,label:s.name,dot:s.color,is_system:s.is_system}))}
@@ -417,6 +527,7 @@ function renderAdvisorBoard(){
           <div class="kanbanCardTop"><div><div class="kanbanRo">RO #${escapeHtml(j.ro_number||'')}</div><div class="kanbanVehicle">${escapeHtml(vehicle)}</div><div class="kanbanCustomer">${escapeHtml(v.customer_name||'No customer')}${v.plate?' · '+escapeHtml(v.plate):''}</div></div><span class="kanbanBay">${escapeHtml(j.bay||'No bay')}</span></div>
           <div class="kanbanConcern">${escapeHtml(j.customer_concern||'No customer concern entered')}</div>
           <div class="kanbanMeta"><div class="kanbanTech"><span class="kanbanAvatar">${escapeHtml(initials(tech))}</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(tech)}</span></div><span class="muted small">Open →</span></div>
+          <div class="mobileStatusControl"><label>Move to status</label><select class="mobileStatusSelect" data-mobile-status-id="${j.id}">${workflowStatuses.map(s=>`<option value="${escapeHtml(s.name)}" ${s.name===j.status?'selected':''}>${escapeHtml(s.name)}</option>`).join('')}</select></div>
         </article>`;
       }).join(''):`<div class="kanbanEmpty">Drop jobs here</div>`}</div>
     </section>`;
@@ -424,7 +535,12 @@ function renderAdvisorBoard(){
   document.querySelectorAll('.kanbanCard').forEach(card=>{
     card.addEventListener('dragstart',e=>{draggedRoId=card.dataset.kanbanId;card.classList.add('dragging');if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',draggedRoId)}});
     card.addEventListener('dragend',()=>{draggedRoId=null;card.classList.remove('dragging');document.querySelectorAll('.kanbanColumn').forEach(x=>x.classList.remove('drag-over'))});
-    card.addEventListener('click',async e=>{if(card.classList.contains('dragging'))return;advisorSelected=jobs.find(j=>j.id===card.dataset.kanbanId);setAdvisorView('list');renderAdvisorQueue();await renderAdvisorDetail()});
+    card.addEventListener('click',async e=>{if(card.classList.contains('dragging')||e.target.closest('.mobileStatusControl'))return;advisorSelected=jobs.find(j=>j.id===card.dataset.kanbanId);setAdvisorView('list');renderAdvisorQueue();await renderAdvisorDetail();if(isMobile())setTimeout(()=>$('#advisorDetail')?.scrollIntoView({behavior:'smooth',block:'start'}),50)});
+  });
+  document.querySelectorAll('.mobileStatusSelect').forEach(sel=>{
+    sel.addEventListener('click',e=>e.stopPropagation());
+    sel.addEventListener('pointerdown',e=>e.stopPropagation());
+    sel.addEventListener('change',async e=>{e.stopPropagation();await moveAdvisorJob(sel.dataset.mobileStatusId,sel.value)});
   });
   document.querySelectorAll('.kanbanColumn').forEach(col=>{
     col.addEventListener('dragover',e=>{e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='move';col.classList.add('drag-over')});
