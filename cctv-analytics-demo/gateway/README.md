@@ -40,6 +40,8 @@ From another device on the same LAN, open `http://<gateway-PC-IP>:8000/`.
 
 ## Analytics
 
+The current gateway stores crossing events, plate reads and incidents in a local SQLite database (`cctv.db`). When the dashboard is opened through the gateway, Today / This Week / This Month / This Year / Custom use the stored real data.
+
 The current gateway:
 - tracks people
 - tracks cars, motorcycles, buses and trucks
