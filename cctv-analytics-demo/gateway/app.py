@@ -1,4 +1,5 @@
-import os, re, time, threading
+import os, re, time, threading, sqlite3
+from datetime import datetime, timedelta
 from collections import defaultdict, deque
 from pathlib import Path
 
@@ -16,6 +17,47 @@ DETECT_EVERY = int(os.getenv("DETECT_EVERY", "3"))
 COUNT_LINE_Y = float(os.getenv("COUNT_LINE_Y", "0.60"))
 STOPPED_SECONDS = int(os.getenv("STOPPED_SECONDS", "240"))
 ENABLE_PLATE_OCR = os.getenv("ENABLE_PLATE_OCR", "false").lower() == "true"
+DB_PATH = os.getenv("DATABASE_PATH", str(Path(__file__).resolve().parent / "cctv.db"))
+
+def db():
+    con = sqlite3.connect(DB_PATH)
+    con.row_factory = sqlite3.Row
+    return con
+
+def init_db():
+    with db() as con:
+        con.executescript("""
+        CREATE TABLE IF NOT EXISTS events (
+          id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL, camera INTEGER NOT NULL,
+          kind TEXT NOT NULL, vehicle_type TEXT, track_id INTEGER, direction TEXT, confidence REAL
+        );
+        CREATE INDEX IF NOT EXISTS idx_events_ts ON events(ts);
+        CREATE TABLE IF NOT EXISTS plates (
+          id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL, camera INTEGER NOT NULL,
+          plate TEXT NOT NULL, confidence REAL, vehicle_type TEXT, track_id INTEGER
+        );
+        CREATE INDEX IF NOT EXISTS idx_plates_ts ON plates(ts);
+        CREATE TABLE IF NOT EXISTS incidents (
+          id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL, camera INTEGER NOT NULL,
+          type TEXT NOT NULL, severity TEXT, description TEXT, track_id INTEGER
+        );
+        CREATE INDEX IF NOT EXISTS idx_incidents_ts ON incidents(ts);
+        """)
+
+def save_event(e):
+    with db() as con:
+        con.execute("INSERT INTO events(ts,camera,kind,vehicle_type,track_id,direction,confidence) VALUES(?,?,?,?,?,?,?)",
+                    (e["time"], e["camera"], "person" if e["type"]=="person" else "vehicle", e["type"], e.get("track_id"), e.get("direction"), e.get("confidence")))
+
+def save_plate(p):
+    with db() as con:
+        con.execute("INSERT INTO plates(ts,camera,plate,confidence,vehicle_type,track_id) VALUES(?,?,?,?,?,?)",
+                    (p["time"], p["camera"], p["plate"], p.get("confidence"), p.get("vehicle_type"), p.get("track_id")))
+
+def save_incident(i):
+    with db() as con:
+        con.execute("INSERT INTO incidents(ts,camera,type,severity,description,track_id) VALUES(?,?,?,?,?,?)",
+                    (i["time"], i["camera"], i["type"], i.get("severity"), i.get("description"), i.get("track_id")))
 
 app = FastAPI(title="AutoGearUp CCTV Gateway")
 
@@ -130,12 +172,14 @@ class CameraWorker:
                         else:
                             self.vehicles_passed += 1
                             self.vehicle_types[name] += 1
-                        self.events.appendleft({
+                        event = {
                             "time": time.strftime("%Y-%m-%d %H:%M:%S"),
                             "camera": 1, "type": name, "track_id": tid,
                             "direction": "inbound" if side == 1 else "outbound",
                             "confidence": round(float(cf), 3)
-                        })
+                        }
+                        self.events.appendleft(event)
+                        save_event(event)
                     self.prev_side[tid] = side
 
                     if is_vehicle:
@@ -147,14 +191,16 @@ class CameraWorker:
                                 self.still_since.setdefault(tid, now)
                                 if now - self.still_since[tid] >= STOPPED_SECONDS and tid not in self.incident_latched:
                                     self.incident_latched.add(tid)
-                                    self.incidents.appendleft({
+                                    incident = {
                                         "time": time.strftime("%Y-%m-%d %H:%M:%S"),
                                         "camera": 1,
                                         "type": "stopped_vehicle",
                                         "severity": "medium",
                                         "description": f"{name.title()} stationary for {STOPPED_SECONDS}s",
                                         "track_id": tid
-                                    })
+                                    }
+                                    self.incidents.appendleft(incident)
+                                    save_incident(incident)
                             else:
                                 self.still_since.pop(tid, None)
                         self.last_pos[tid] = (cx, cy)
@@ -178,13 +224,15 @@ class CameraWorker:
                 if 4 <= len(clean) <= 8 and score >= 0.50:
                     if not any(p.get("plate") == clean and p.get("track_id") == tid for p in list(self.plates)[:10]):
                         self.readable_plates += 1
-                        self.plates.appendleft({
+                        plate_event = {
                             "time": time.strftime("%Y-%m-%d %H:%M:%S"),
                             "camera": 1, "plate": clean,
                             "confidence": round(float(score),3),
                             "vehicle_type": vehicle_type,
                             "track_id": tid
-                        })
+                        }
+                        self.plates.appendleft(plate_event)
+                        save_plate(plate_event)
                     break
         except Exception:
             pass
@@ -193,6 +241,7 @@ worker = CameraWorker()
 
 @app.on_event("startup")
 def startup():
+    init_db()
     worker.start()
 
 @app.get("/api/health")
@@ -203,6 +252,47 @@ def health():
         "frame_available": worker.frame is not None,
         "analytics_enabled": worker.model is not None,
         "plate_ocr_enabled": worker.ocr is not None
+    }
+
+
+def period_bounds(period, start=None, end=None):
+    now = datetime.now()
+    if period == "today":
+        a = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif period == "week":
+        a = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    elif period == "month":
+        a = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    elif period == "year":
+        a = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    elif period == "custom" and start:
+        a = datetime.fromisoformat(start).replace(hour=0, minute=0, second=0, microsecond=0)
+    else:
+        a = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    if period == "custom" and end:
+        b = datetime.fromisoformat(end).replace(hour=23, minute=59, second=59, microsecond=999999)
+    else:
+        b = now
+    return a.strftime("%Y-%m-%d %H:%M:%S"), b.strftime("%Y-%m-%d %H:%M:%S")
+
+@app.get("/api/history")
+def history(period: str = "today", start: str | None = None, end: str | None = None):
+    a, b = period_bounds(period, start, end)
+    with db() as con:
+        people = con.execute("SELECT COUNT(*) n FROM events WHERE ts BETWEEN ? AND ? AND kind='person'", (a,b)).fetchone()["n"]
+        vehicles = con.execute("SELECT COUNT(*) n FROM events WHERE ts BETWEEN ? AND ? AND kind='vehicle'", (a,b)).fetchone()["n"]
+        plates_n = con.execute("SELECT COUNT(*) n FROM plates WHERE ts BETWEEN ? AND ?", (a,b)).fetchone()["n"]
+        incidents_n = con.execute("SELECT COUNT(*) n FROM incidents WHERE ts BETWEEN ? AND ?", (a,b)).fetchone()["n"]
+        vt = {r["vehicle_type"]: r["n"] for r in con.execute("SELECT vehicle_type, COUNT(*) n FROM events WHERE ts BETWEEN ? AND ? AND kind='vehicle' GROUP BY vehicle_type", (a,b))}
+        latest_events = [dict(r) for r in con.execute("SELECT ts as time,camera,vehicle_type as type,track_id,direction,confidence FROM events WHERE ts BETWEEN ? AND ? ORDER BY ts DESC LIMIT 50", (a,b))]
+        latest_plates = [dict(r) for r in con.execute("SELECT ts as time,camera,plate,confidence,vehicle_type,track_id FROM plates WHERE ts BETWEEN ? AND ? ORDER BY ts DESC LIMIT 50", (a,b))]
+        latest_incidents = [dict(r) for r in con.execute("SELECT ts as time,camera,type,severity,description,track_id FROM incidents WHERE ts BETWEEN ? AND ? ORDER BY ts DESC LIMIT 50", (a,b))]
+    return {
+        "period": period, "start": a, "end": b,
+        "people_passed": people, "vehicles_passed": vehicles,
+        "readable_plates": plates_n, "major_incidents": incidents_n,
+        "vehicle_types": vt, "latest_events": latest_events,
+        "latest_plates": latest_plates, "incidents": latest_incidents
     }
 
 @app.get("/api/stats")
