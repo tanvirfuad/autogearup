@@ -3,14 +3,44 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AutoGearUp Technician</title>
+<title>AutoGearUp</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--bg:#0b0d10;--panel:#12161b;--line:#262d35;--text:#f7f8f9;--muted:#97a1ab;--green:#7cf07c;--blue:#66aaff;--yellow:#f2c65e;--red:#ff7575;--radius:18px}
-*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}button,input,textarea,select{font:inherit}
-.hidden{display:none!important}.shell{display:grid;grid-template-columns:340px 1fr;min-height:100vh}.side{padding:22px;border-right:1px solid var(--line);background:#0c0f12;overflow:auto}.main{padding:26px;max-width:1500px;width:100%;margin:auto}.brand{display:flex;gap:12px;align-items:center;margin-bottom:22px}.logo{width:42px;height:42px;border-radius:13px;background:var(--green);color:#071008;display:grid;place-items:center;font-weight:900}.brand h1{font-size:19px;margin:0}.muted{color:var(--muted)}.small{font-size:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}.userbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.btn{border:1px solid var(--line);background:#171c21;color:var(--text);border-radius:12px;padding:10px 12px;cursor:pointer}.btn.primary{background:var(--green);color:#071008;border-color:var(--green);font-weight:850}.btn.danger{color:var(--red)}.btn:disabled{opacity:.5;cursor:not-allowed}.search{width:100%;padding:12px 13px;background:#0e1216;border:1px solid var(--line);color:var(--text);border-radius:12px;margin-bottom:12px}.filters{display:flex;gap:7px;overflow:auto;margin-bottom:12px}.filter{white-space:nowrap;border:1px solid var(--line);background:#11161b;color:var(--muted);border-radius:999px;padding:7px 10px;font-size:12px;cursor:pointer}.filter.on{background:#fff;color:#0b0d10;border-color:#fff}.vehicleList{display:grid;gap:9px}.vehicle{padding:13px;border-radius:14px;border:1px solid var(--line);background:#12161b;cursor:pointer}.vehicle.on{border-color:var(--green)}.vrow{display:flex;justify-content:space-between;gap:10px}.vname{font-weight:800;font-size:14px}.tag{font-size:11px;border:1px solid var(--line);padding:4px 7px;border-radius:7px;color:#cbd2d8}.status{margin-top:10px;font-size:11px;font-weight:800}.Waiting{color:#aab3bb}.Inspection{color:var(--blue)}.Work{color:var(--green)}.Parts{color:var(--yellow)}.Completed{color:#6ce6b2}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.top h2{margin:0;font-size:27px}.grid2{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}.hero{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}.hero h3{margin:0;font-size:24px}.meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.meta span{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:5px 7px;border-radius:8px}.workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}.flow{padding:15px;border:1px solid var(--line);background:#12161b;color:var(--text);border-radius:15px;text-align:left;cursor:pointer}.flow strong{display:block}.flow small{color:var(--muted)}.sectionTitle{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.sectionTitle h4{margin:0}.list{display:grid;gap:8px}.row{border:1px solid var(--line);border-radius:12px;padding:11px;background:#0e1216}.row.flex{display:flex;align-items:center;justify-content:space-between;gap:12px}.row input[type=checkbox]{width:18px;height:18px;accent-color:var(--green)}textarea,input,select{background:#0d1115;border:1px solid var(--line);color:var(--text);border-radius:11px;padding:10px}.full{width:100%}.stack{display:grid;gap:9px}.note{font-size:13px}.time{font-size:10px;color:var(--muted);margin-top:4px}.tabs{display:flex;gap:8px;margin-bottom:16px}.tab{padding:9px 12px;border:1px solid var(--line);background:#12161b;color:var(--muted);border-radius:10px;cursor:pointer}.tab.on{color:#0b0d10;background:#fff}.empty{min-height:60vh;display:grid;place-items:center;border:1px dashed var(--line);border-radius:20px;color:var(--muted);text-align:center}.auth{min-height:100vh;display:grid;place-items:center;padding:20px}.authbox{width:min(440px,100%)}.authbox h1{margin-bottom:6px}.authform{display:grid;gap:10px;margin-top:18px}.msg{padding:10px 12px;border-radius:10px;background:#171c21;color:var(--muted);font-size:12px}.toast{position:fixed;right:20px;bottom:20px;background:#fff;color:#111;padding:12px 15px;border-radius:12px;font-weight:800;opacity:0;transform:translateY(10px);transition:.2s;z-index:99}.toast.show{opacity:1;transform:none}.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}.stat strong{display:block;font-size:22px}.advisorGrid{display:grid;grid-template-columns:360px 1fr;gap:16px}.advisorQueue{display:grid;gap:8px;max-height:70vh;overflow:auto}.advisorJob{border:1px solid var(--line);background:#0e1216;border-radius:13px;padding:12px;cursor:pointer}.advisorJob.on{border-color:var(--green)}.price{font-variant-numeric:tabular-nums;font-weight:800}.estimateTotal{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);margin-top:10px;padding-top:12px;font-size:18px}.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
-@media(max-width:950px){.shell{grid-template-columns:290px 1fr}.workflow{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}.advisorGrid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:700px){.shell{display:block}.side{border-right:0;border-bottom:1px solid var(--line)}.vehicleList{display:flex;overflow:auto}.vehicle{min-width:220px}.main{padding:16px}.workflow{grid-template-columns:1fr 1fr}.top{display:none}.hero{display:block}.grid2{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.three{grid-template-columns:1fr}}
+:root{
+  --bg:#f5f6f8;--panel:#ffffff;--panel-2:#f9fafb;--line:#e5e7eb;--line-strong:#d9dde3;
+  --text:#111827;--muted:#6b7280;--soft:#9ca3af;--green:#22c55e;--green-dark:#15803d;
+  --blue:#2563eb;--yellow:#d97706;--red:#dc2626;--purple:#7c3aed;--radius:14px;--sidebar:#ffffff;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.06)
+}
+*{box-sizing:border-box}html,body{min-height:100%}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+button,input,textarea,select{font:inherit}.hidden{display:none!important}
+.shell{display:grid;grid-template-columns:268px minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:0;height:100vh;background:var(--sidebar);border-right:1px solid var(--line);padding:22px 16px 18px;overflow:auto;z-index:5}
+.main{padding:0 28px 40px;max-width:1650px;width:100%;margin:0 auto}
+.brand{display:flex;gap:11px;align-items:center;margin:0 6px 24px}.logo{width:36px;height:36px;border-radius:10px;background:#111827;color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;letter-spacing:-.04em}.brand h1{font-size:17px;line-height:1.1;margin:0;font-weight:750;letter-spacing:-.02em}.brand .small{margin-top:3px}
+.muted{color:var(--muted)}.small{font-size:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.userbar{padding:10px 11px;margin:0 0 18px;border-radius:12px;box-shadow:none;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fafafa}.userbar #who{font-size:13px;max-width:135px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.userbar #role{font-size:10px;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}.userbar #logout{padding:7px 9px;font-size:11px}
+.tabs{display:grid;gap:4px;margin:0 0 20px}.navLabel{padding:0 10px 7px;color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.tab{display:flex;align-items:center;gap:10px;width:100%;padding:10px 11px;border:0;background:transparent;color:#4b5563;border-radius:9px;cursor:pointer;text-align:left;font-weight:600;font-size:13px}.tab:hover{background:#f3f4f6;color:#111827}.tab.on{background:#eef1f5;color:#111827}.tab .navIcon{width:19px;height:19px;display:grid;place-items:center;color:#6b7280;font-size:14px}.tab.on .navIcon{color:#111827}
+.queueLabel{display:flex;align-items:center;justify-content:space-between;padding:0 4px 8px;color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.search{width:100%;padding:9px 11px;background:#fff;border:1px solid var(--line);color:var(--text);border-radius:9px;margin-bottom:9px;outline:none}.search:focus,input:focus,textarea:focus,select:focus{border-color:#9ca3af;box-shadow:0 0 0 3px rgba(17,24,39,.05);outline:none}
+.filters{display:flex;gap:5px;overflow:auto;margin-bottom:10px;padding-bottom:2px}.filter{white-space:nowrap;border:1px solid var(--line);background:#fff;color:#6b7280;border-radius:999px;padding:5px 8px;font-size:10px;cursor:pointer}.filter.on{background:#111827;color:#fff;border-color:#111827}
+.vehicleList{display:grid;gap:7px}.vehicle{padding:10px 11px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;transition:.15s}.vehicle:hover{border-color:#cfd4dc;background:#fcfcfd}.vehicle.on{border-color:#111827;box-shadow:0 0 0 1px #111827}.vrow{display:flex;justify-content:space-between;gap:10px}.vname{font-weight:650;font-size:12px;line-height:1.35}.tag{font-size:10px;border:1px solid var(--line);padding:3px 6px;border-radius:6px;color:#6b7280;background:#fff;white-space:nowrap}.status{margin-top:8px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:5px}.status:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}.Waiting{color:#6b7280}.Inspection{color:#2563eb}.Work{color:#16a34a}.Parts{color:#d97706}.Completed{color:#059669}
+.top{height:72px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);margin-bottom:24px;position:sticky;top:0;background:rgba(245,246,248,.92);backdrop-filter:blur(14px);z-index:4}.top h2{margin:0;font-size:20px;letter-spacing:-.025em;font-weight:720}.top .muted{margin-top:3px}.syncPill{display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:#4b5563;font-size:11px}.syncPill:before{content:"";width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px #dcfce7}
+.grid2{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);gap:16px}.hero{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:16px}.hero h3{margin:0;font-size:21px;letter-spacing:-.02em}.meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.meta span{font-size:10px;color:#6b7280;border:1px solid var(--line);background:#f9fafb;padding:4px 7px;border-radius:6px}
+.workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}.flow{padding:13px;border:1px solid var(--line);background:#fff;color:var(--text);border-radius:11px;text-align:left;cursor:pointer;box-shadow:var(--shadow)}.flow:hover{border-color:#b9c0ca}.flow strong{display:block;font-size:12px}.flow small{display:block;color:var(--muted);font-size:10px;margin-top:4px;line-height:1.35}
+.sectionTitle{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.sectionTitle h4{margin:0;font-size:13px;font-weight:700}.list{display:grid;gap:7px}.row{border:1px solid var(--line);border-radius:10px;padding:10px 11px;background:#fff}.row.flex{display:flex;align-items:center;justify-content:space-between;gap:12px}.row input[type=checkbox]{width:16px;height:16px;accent-color:#111827}
+textarea,input,select{background:#fff;border:1px solid var(--line);color:var(--text);border-radius:9px;padding:9px 10px}.full{width:100%}.stack{display:grid;gap:10px}.note{font-size:12px}.time{font-size:9px;color:#9ca3af;margin-top:4px}
+.btn{border:1px solid var(--line);background:#fff;color:#374151;border-radius:9px;padding:8px 10px;cursor:pointer;font-weight:600;font-size:12px}.btn:hover{background:#f9fafb}.btn.primary{background:#111827;color:#fff;border-color:#111827}.btn.primary:hover{background:#000}.btn.danger{color:#b91c1c}.btn:disabled{opacity:.45;cursor:not-allowed}
+.empty{min-height:420px;display:grid;place-items:center;border:1px dashed #d6dae1;border-radius:14px;color:#9ca3af;text-align:center;background:#fafafa}
+.auth{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(180deg,#f9fafb,#eef1f5)}.authbox{width:min(410px,100%);padding:26px}.authbox .brand{margin-left:0}.authbox h2{font-size:22px;margin:6px 0}.authform{display:grid;gap:10px;margin-top:20px}.msg{padding:9px 11px;border-radius:9px;background:#f9fafb;color:#6b7280;border:1px solid var(--line);font-size:11px}
+.toast{position:fixed;right:22px;bottom:22px;background:#111827;color:#fff;padding:11px 14px;border-radius:10px;font-weight:650;font-size:12px;box-shadow:0 10px 30px rgba(17,24,39,.18);opacity:0;transform:translateY(10px);transition:.2s;z-index:99}.toast.show{opacity:1;transform:none}
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px}.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px 16px;box-shadow:var(--shadow)}.stat .small{font-size:10px;font-weight:700;letter-spacing:.06em}.stat strong{display:block;font-size:24px;margin-top:8px;letter-spacing:-.04em}
+.advisorGrid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px}.advisorQueue{display:grid;gap:7px;max-height:68vh;overflow:auto}.advisorJob{border:1px solid var(--line);background:#fff;border-radius:10px;padding:11px;cursor:pointer}.advisorJob:hover{background:#fafafa}.advisorJob.on{border-color:#111827;box-shadow:0 0 0 1px #111827}.price{font-variant-numeric:tabular-nums;font-weight:700}.estimateTotal{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);margin-top:12px;padding-top:12px;font-size:16px}.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.overviewHero{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}.overviewHero h3{font-size:24px;margin:0 0 5px;letter-spacing:-.035em}.overviewGrid{display:grid;grid-template-columns:1.4fr .8fr;gap:16px}.overviewTable{width:100%;border-collapse:collapse}.overviewTable th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;padding:0 10px 10px;border-bottom:1px solid var(--line)}.overviewTable td{padding:11px 10px;border-bottom:1px solid #f0f1f3;font-size:12px}.overviewTable tr:last-child td{border-bottom:0}.metricIcon{width:30px;height:30px;border-radius:8px;background:#f3f4f6;display:grid;place-items:center;font-size:14px;margin-bottom:12px}
+@media(max-width:1100px){.shell{grid-template-columns:240px 1fr}.workflow{grid-template-columns:1fr 1fr}.grid2,.overviewGrid{grid-template-columns:1fr}.advisorGrid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.shell{display:block}.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}.brand{margin-bottom:14px}.tabs{grid-template-columns:repeat(2,1fr)}.tab{justify-content:center}.navLabel{display:none}.queueLabel{margin-top:12px}.vehicleList{display:flex;overflow:auto}.vehicle{min-width:220px}.main{padding:0 14px 28px}.top{height:62px;margin-bottom:16px}.workflow{grid-template-columns:1fr 1fr}.hero{display:block}.grid2{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.three{grid-template-columns:1fr}.overviewHero{display:block}.overviewHero .btn{margin-top:10px}}
 </style>
 </head>
 <body>
@@ -34,7 +64,16 @@
 <aside class="side">
   <div class="brand"><div class="logo">AG</div><div><h1>AutoGearUp</h1><div class="muted small">Technician Workspace</div></div></div>
   <div class="card userbar"><div><div id="who" style="font-weight:800"></div><div id="role" class="muted small"></div></div><button id="logout" class="btn">Sign out</button></div>
-  <input id="search" class="search" placeholder="Search RO, vehicle, plate">
+  <div class="navLabel">Workspace</div>
+  <div class="tabs">
+    <button class="tab on" data-tab="overview"><span class="navIcon">▦</span>Dashboard</button>
+    <button class="tab" data-tab="jobs"><span class="navIcon">⌁</span>Technician</button>
+    <button id="advisorTabBtn" class="tab hidden" data-tab="advisor"><span class="navIcon">◎</span>Service Advisor</button>
+    <button id="newRoTabBtn" class="tab hidden" data-tab="newro"><span class="navIcon">＋</span>New Repair Order</button>
+    <button id="staffTabBtn" class="tab hidden" data-tab="staff"><span class="navIcon">♙</span>Staff</button>
+  </div>
+  <div class="queueLabel"><span>Repair Order Queue</span><span id="queueCount"></span></div>
+  <input id="search" class="search" placeholder="Search repair orders">
   <div class="filters">
     <button class="filter on" data-filter="All">All</button><button class="filter" data-filter="Inspection">Inspection</button><button class="filter" data-filter="Work in Progress">Working</button><button class="filter" data-filter="Waiting for Parts">Parts</button><button class="filter" data-filter="Work Completed">Done</button>
   </div>
@@ -42,9 +81,31 @@
 </aside>
 
 <main class="main">
-  <div class="top"><div><h2>Technician Dashboard</h2><div class="muted small">Live AutoGearUp shop workflow</div></div><div id="sync" class="muted small">Connected</div></div>
-  <div class="tabs"><button class="tab on" data-tab="jobs">Technician</button><button id="advisorTabBtn" class="tab hidden" data-tab="advisor">Service Advisor</button><button id="newRoTabBtn" class="tab hidden" data-tab="newro">New RO</button><button id="staffTabBtn" class="tab hidden" data-tab="staff">Staff</button></div>
-  <section id="jobsTab">
+  <div class="top"><div><h2 id="pageTitle">Dashboard</h2><div id="pageSubtitle" class="muted small">Shop activity and live repair order status</div></div><div class="syncPill"><span id="sync">Connected</span></div></div>
+  <section id="overviewTab">
+    <div class="overviewHero">
+      <div><h3>Good morning</h3><div class="muted">Here’s what is happening in your shop right now.</div></div>
+      <button id="overviewNewRo" class="btn primary hidden">+ New Repair Order</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="metricIcon">○</div><div class="muted small">WAITING</div><strong id="ovWaiting">0</strong></div>
+      <div class="stat"><div class="metricIcon">⌁</div><div class="muted small">INSPECTION</div><strong id="ovInspection">0</strong></div>
+      <div class="stat"><div class="metricIcon">▶</div><div class="muted small">IN PROGRESS</div><strong id="ovWorking">0</strong></div>
+      <div class="stat"><div class="metricIcon">□</div><div class="muted small">WAITING PARTS</div><strong id="ovParts">0</strong></div>
+      <div class="stat"><div class="metricIcon">✓</div><div class="muted small">COMPLETED</div><strong id="ovCompleted">0</strong></div>
+    </div>
+    <div class="overviewGrid">
+      <div class="card">
+        <div class="sectionTitle"><div><h4>Repair Orders</h4><div class="muted small">Live shop workflow</div></div><button id="viewTechnician" class="btn">View technician board</button></div>
+        <div style="overflow:auto"><table class="overviewTable"><thead><tr><th>RO</th><th>Vehicle</th><th>Customer</th><th>Status</th><th>Bay</th></tr></thead><tbody id="overviewRows"></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="sectionTitle"><div><h4>Shop Summary</h4><div class="muted small">Current workload</div></div></div>
+        <div id="overviewSummary" class="list"></div>
+      </div>
+    </div>
+  </section>
+  <section id="jobsTab" class="hidden">
     <div id="empty" class="empty">Select a vehicle from the queue.</div>
     <div id="detail" class="hidden">
       <div class="hero card">
@@ -152,6 +213,7 @@ async function initialize(session){
     $('#staffTabBtn').classList.toggle('hidden',membership.role!=='admin');
     $('#newRoTabBtn').classList.toggle('hidden',!['admin','advisor'].includes(membership.role));
     $('#advisorTabBtn').classList.toggle('hidden',!['admin','advisor'].includes(membership.role));
+    $('#overviewNewRo').classList.toggle('hidden',!['admin','advisor'].includes(membership.role));
     await loadStaff();
     await loadJobs();
     subscribeRealtime();
@@ -161,7 +223,7 @@ async function loadJobs(){
   $('#sync').textContent='Syncing...';
   const {data,error}=await sb.from('repair_orders').select('id,ro_number,bay,status,customer_concern,updated_at,assigned_technician_id,promised_at,vehicle:vehicles(id,customer_name,customer_phone,customer_email,year,make,model,trim,plate,mileage,vin)').eq('shop_id',membership.shop_id).order('opened_at',{ascending:false});
   if(error){toast(error.message);return}
-  jobs=data||[];renderQueue();renderAdvisorQueue();$('#sync').textContent='Connected';
+  jobs=data||[];renderQueue();renderAdvisorQueue();renderOverview();$('#sync').textContent='Connected';if($('#queueCount'))$('#queueCount').textContent=jobs.length;
   if(selected){selected=jobs.find(x=>x.id===selected.id)||null;if(selected)await renderDetail()}
 }
 function renderQueue(){
@@ -198,8 +260,22 @@ $('#ensureInspection').onclick=ensureInspection;
 async function ensureInspection(){if(!selected)return;let {data:ins}=await sb.from('inspections').select('*').eq('repair_order_id',selected.id).order('started_at',{ascending:false}).limit(1).maybeSingle();if(!ins){const created=await sb.from('inspections').insert({repair_order_id:selected.id,technician_id:user.id}).select().single();if(created.error)return toast(created.error.message);ins=created.data;const rows=inspectionDefaults.map(([item_key,label])=>({inspection_id:ins.id,item_key,label,condition:'not_checked'}));const i=await sb.from('inspection_items').insert(rows);if(i.error)return toast(i.error.message)}await setStatus('Inspection');await loadInspection()}
 async function loadInspection(){const {data:ins}=await sb.from('inspections').select('id,status').eq('repair_order_id',selected.id).order('started_at',{ascending:false}).limit(1).maybeSingle();if(!ins){$('#inspectionList').innerHTML='<div class="muted small">Start the inspection to load checklist.</div>';return}const {data,error}=await sb.from('inspection_items').select('*').eq('inspection_id',ins.id).order('created_at');if(error)return toast(error.message);$('#inspectionList').innerHTML=(data||[]).map(i=>`<label class="row flex"><div><div style="font-weight:750">${escapeHtml(i.label)}</div><div class="muted small">${i.condition==='pass'?'Completed':'Not checked'}</div></div><input class="inspectionCheck" data-id="${i.id}" type="checkbox" ${i.condition==='pass'?'checked':''}></label>`).join('');document.querySelectorAll('.inspectionCheck').forEach(c=>c.onchange=async()=>{const {error}=await sb.from('inspection_items').update({condition:c.checked?'pass':'not_checked'}).eq('id',c.dataset.id);if(error){c.checked=!c.checked;toast(error.message)}else loadInspection()})}
 
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#jobsTab').classList.toggle('hidden',b.dataset.tab!=='jobs');$('#advisorTab').classList.toggle('hidden',b.dataset.tab!=='advisor');$('#newroTab').classList.toggle('hidden',b.dataset.tab!=='newro');$('#staffTab').classList.toggle('hidden',b.dataset.tab!=='staff');if(b.dataset.tab==='advisor')renderAdvisorQueue()});
+const tabTitles={overview:['Dashboard','Shop activity and live repair order status'],jobs:['Technician','Vehicle queue and technician workflow'],advisor:['Service Advisor','Intake, estimates, authorization and assignment'],newro:['New Repair Order','Create a customer, vehicle and repair order'],staff:['Staff','Manage shop users and roles']};
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');const tab=b.dataset.tab;$('#overviewTab').classList.toggle('hidden',tab!=='overview');$('#jobsTab').classList.toggle('hidden',tab!=='jobs');$('#advisorTab').classList.toggle('hidden',tab!=='advisor');$('#newroTab').classList.toggle('hidden',tab!=='newro');$('#staffTab').classList.toggle('hidden',tab!=='staff');const copy=tabTitles[tab]||tabTitles.overview;$('#pageTitle').textContent=copy[0];$('#pageSubtitle').textContent=copy[1];if(tab==='advisor')renderAdvisorQueue();if(tab==='overview')renderOverview()});
 $('#newRoForm').onsubmit=async e=>{e.preventDefault();const msg=$('#newRoMsg');msg.classList.remove('hidden');msg.textContent='Creating...';const vehicle={shop_id:membership.shop_id,customer_name:$('#customerName').value.trim(),customer_phone:$('#customerPhone').value.trim()||null,customer_email:$('#customerEmail').value.trim()||null,year:Number($('#vYear').value),make:$('#vMake').value.trim(),model:$('#vModel').value.trim(),trim:$('#vTrim').value.trim()||null,plate:$('#vPlate').value.trim()||null,vin:$('#vVin').value.trim()||null,mileage:$('#vMileage').value?Number($('#vMileage').value):null};const vr=await sb.from('vehicles').insert(vehicle).select('id').single();if(vr.error){msg.textContent=vr.error.message;return}const ro={shop_id:membership.shop_id,vehicle_id:vr.data.id,ro_number:$('#roNumber').value.trim(),bay:$('#roBay').value.trim()||null,customer_concern:$('#roConcern').value.trim()||null,status:'Waiting'};const rr=await sb.from('repair_orders').insert(ro).select('id').single();if(rr.error){msg.textContent=rr.error.message;return}msg.textContent='Repair order created.';e.target.reset();await loadJobs();selected=jobs.find(j=>j.id===rr.data.id)||null;document.querySelector('[data-tab="jobs"]').click();if(selected)await renderDetail();toast('New repair order created')};
+
+function renderOverview(){
+  if(!jobs)return;
+  const counts={Waiting:0,Inspection:0,'Work in Progress':0,'Waiting for Parts':0,'Work Completed':0};
+  jobs.forEach(j=>{if(counts[j.status]!==undefined)counts[j.status]++});
+  $('#ovWaiting').textContent=counts.Waiting;$('#ovInspection').textContent=counts.Inspection;$('#ovWorking').textContent=counts['Work in Progress'];$('#ovParts').textContent=counts['Waiting for Parts'];$('#ovCompleted').textContent=counts['Work Completed'];
+  $('#overviewRows').innerHTML=jobs.slice(0,10).map(j=>{const v=j.vehicle||{};return `<tr><td><b>#${escapeHtml(j.ro_number||'')}</b></td><td>${escapeHtml(((v.year||'')+' '+(v.make||'')+' '+(v.model||'')).trim())}</td><td>${escapeHtml(v.customer_name||'—')}</td><td><span class="status ${statusClass(j.status)}">${j.status}</span></td><td>${escapeHtml(j.bay||'—')}</td></tr>`}).join('')||'<tr><td colspan="5" class="muted">No repair orders yet.</td></tr>';
+  const active=jobs.filter(j=>j.status!=='Work Completed').length;
+  const assigned=jobs.filter(j=>j.assigned_technician_id).length;
+  $('#overviewSummary').innerHTML=`<div class="row flex"><span>Open repair orders</span><b>${active}</b></div><div class="row flex"><span>Assigned to technicians</span><b>${assigned}</b></div><div class="row flex"><span>Unassigned</span><b>${Math.max(0,active-assigned)}</b></div><div class="row flex"><span>Total repair orders</span><b>${jobs.length}</b></div>`;
+}
+$('#viewTechnician').onclick=()=>document.querySelector('[data-tab="jobs"]').click();
+$('#overviewNewRo').onclick=()=>document.querySelector('[data-tab="newro"]').click();
 
 async function loadStaff(){
   if(!membership)return;
