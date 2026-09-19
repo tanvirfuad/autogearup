@@ -70,27 +70,40 @@ function clock(){document.querySelectorAll('.clock').forEach(x=>x.textContent=ne
 function plateGen(){const a='ABCDEFGHJKLMNPRSTUVWXYZ',p=()=>a[Math.floor(Math.random()*a.length)];return p()+p()+p()+p()+' '+Math.floor(100+Math.random()*899)}
 function sim(){if(liveMode||period!=='today')return;if(Math.random()>.35){bump.v++;let read=Math.random()>.23;if(read)bump.l++;let ts=new Date().toLocaleTimeString([],{hour12:false}),t=['Sedan','SUV','Pickup','Van','Hatchback'][Math.floor(Math.random()*5)];rows.unshift([ts,'Cam 0'+(1+Math.floor(Math.random()*4)),t,read?plateGen():'—',read?(86+Math.floor(Math.random()*13))+'%':'—',Math.random()>.5?'Inbound':'Outbound']);rows=rows.slice(0,8);tables()}if(Math.random()>.6)bump.p++;stats()}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(b.dataset.view).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');let map={dash:['Operations Dashboard','Real-time people, vehicles, plates and incidents'],cameras:['Cameras','CCTV feed and gateway management'],history:['Historical Analytics','Past data and reporting'],plates:['License Plates','Readable vehicle plate events'],incidents:['Incident Center','Major events and review queue']};title.textContent=map[b.dataset.view][0];subtitle.textContent=map[b.dataset.view][1]});
-document.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-period]').forEach(x=>x.classList.remove('active'));b.classList.add('active');period=b.dataset.period;custom.classList.toggle('show',period==='custom');if(period!=='custom')stats(mult[period],{today:'Today',week:'This Week',month:'This Month',year:'This Year'}[period])});
-apply.onclick=()=>{let d=Math.max(1,(new Date(to.value)-new Date(from.value))/86400000+1);period='custom';stats(d*.98,d+' day range');draw(d<=2?'today':d<=10?'week':d<=60?'month':'year')};
+document.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-period]').forEach(x=>x.classList.remove('active'));b.classList.add('active');period=b.dataset.period;custom.classList.toggle('show',period==='custom');if(period!=='custom'){if(liveMode)loadLiveHistory(period);else stats(mult[period],{today:'Today',week:'This Week',month:'This Month',year:'This Year'}[period])}});
+apply.onclick=()=>{let d=Math.max(1,(new Date(to.value)-new Date(from.value))/86400000+1);period='custom';if(liveMode)loadLiveHistory('custom',from.value,to.value);else{stats(d*.98,d+' day range');draw(d<=2?'today':d<=10?'week':d<=60?'month':'year')}};
 connect.onclick=()=>modal.classList.add('show');close.onclick=()=>modal.classList.remove('show');
 let now=new Date();to.value=now.toISOString().slice(0,10);now.setDate(now.getDate()-6);from.value=now.toISOString().slice(0,10);
 incidents();tables();stats();clock();checkGateway();setInterval(clock,1000);setInterval(sim,3000);
-async function refreshLive(){
+function renderLiveData(d,label){
+  people.textContent=fmt(d.people_passed||0); vehicles.textContent=fmt(d.vehicles_passed||0); plates.textContent=fmt(d.readable_plates||0); incidentCount.textContent=fmt(d.major_incidents||0);
+  rate.textContent=((d.vehicles_passed||0)>0?((d.readable_plates||0)/(d.vehicles_passed||1)*100):0).toFixed(1)+'%';
+  const vt=d.vehicle_types||{}; const total=Math.max(1,Object.values(vt).reduce((a,b)=>a+b,0));
+  const order=['car','truck','bus','motorcycle'];
+  types.innerHTML=order.map(k=>'<div class="type"><span>'+k.toUpperCase()+'</span><b>'+fmt(vt[k]||0)+'</b><div class="meter"><i style="width:'+Math.min(100,((vt[k]||0)/total)*100)+'%"></i></div></div>').join('');
+  typePeriod.textContent=label||'Live';
+  const pmap={}; (d.latest_plates||[]).forEach(p=>pmap[p.track_id]=p);
+  rows=(d.latest_events||[]).slice(0,8).map(e=>{const p=pmap[e.track_id];return[(e.time||'').split(' ').pop()||'', 'Cam 01', (e.type||'').replace(/^./,x=>x.toUpperCase()), p?p.plate:'—', Math.round((e.confidence||0)*100)+'%', (e.direction||'').replace(/^./,x=>x.toUpperCase())]});
+  tables();
+  const incidentRows=d.incidents||[];
+  if(incidentRows.length){const h=incidentRows.map(x=>'<div class="alert"><div class="ico">⚠</div><div><b>'+((x.type||'incident').replaceAll('_',' '))+'</b><p>'+(x.description||'')+'</p></div><time>'+((x.time||'').split(' ').pop()||'')+'</time></div>').join('');alerts.innerHTML=h;incidentAll.innerHTML=h;}
+  else {alerts.innerHTML='<div class="empty" style="height:120px">No incidents in this period.</div>';incidentAll.innerHTML=alerts.innerHTML;}
+}
+async function loadLiveHistory(p=period,startDate='',endDate=''){
   if(!liveMode)return;
   try{
-    const r=await fetch('/api/stats',{cache:'no-store'}); if(!r.ok)return;
+    const qs=new URLSearchParams({period:p});
+    if(startDate)qs.set('start',startDate); if(endDate)qs.set('end',endDate);
+    const r=await fetch('/api/history?'+qs.toString(),{cache:'no-store'}); if(!r.ok)return;
     const d=await r.json();
-    people.textContent=fmt(d.people_passed||0); vehicles.textContent=fmt(d.vehicles_passed||0); plates.textContent=fmt(d.readable_plates||0); incidentCount.textContent=fmt(d.major_incidents||0);
-    rate.textContent=((d.vehicles_passed||0)>0?((d.readable_plates||0)/(d.vehicles_passed||1)*100):0).toFixed(1)+'%';
-    const vt=d.vehicle_types||{}; const total=Math.max(1,Object.values(vt).reduce((a,b)=>a+b,0));
-    const order=['car','truck','bus','motorcycle'];
-    types.innerHTML=order.map(k=>'<div class="type"><span>'+k.toUpperCase()+'</span><b>'+fmt(vt[k]||0)+'</b><div class="meter"><i style="width:'+Math.min(100,((vt[k]||0)/total)*100)+'%"></i></div></div>').join('');
-    typePeriod.textContent='Live session';
-    const pmap={}; (d.latest_plates||[]).forEach(p=>pmap[p.track_id]=p);
-    rows=(d.latest_events||[]).slice(0,8).map(e=>{const p=pmap[e.track_id];return[(e.time||'').split(' ').pop()||'', 'Cam 01', (e.type||'').replace(/^./,x=>x.toUpperCase()), p?p.plate:'—', Math.round((e.confidence||0)*100)+'%', (e.direction||'').replace(/^./,x=>x.toUpperCase())]});
-    tables();
-    if((d.incidents||[]).length){const h=d.incidents.map(x=>'<div class="alert"><div class="ico">⚠</div><div><b>'+((x.type||'incident').replaceAll('_',' '))+'</b><p>'+(x.description||'')+'</p></div><time>'+((x.time||'').split(' ').pop()||'')+'</time></div>').join('');alerts.innerHTML=h;incidentAll.innerHTML=h;}
+    const labelsMap={today:'Today',week:'This Week',month:'This Month',year:'This Year',custom:'Custom'};
+    renderLiveData(d,labelsMap[p]||'Live');
   }catch(e){}
+}
+async function refreshLive(){
+  if(!liveMode)return;
+  if(period==='custom') await loadLiveHistory('custom',from.value,to.value);
+  else await loadLiveHistory(period);
 }
 async function checkGateway(){
   try{
@@ -99,7 +112,7 @@ async function checkGateway(){
     liveMode=true; cam1.classList.add('live'); liveCam.style.display='block'; liveCam.src='/api/cameras/1/stream?t='+Date.now();
     modePill.textContent='● LIVE CAMERA'; cameraMode.textContent=h.analytics_enabled?'Local AI analytics':'Live feed connected'; subtitle.textContent='Live camera analytics from local gateway';
     const side=document.querySelector('.side'); if(side)side.innerHTML='<span class="dot"></span>Camera 1 connected<br><br>Local gateway active';
-    await refreshLive(); setInterval(refreshLive,2000);
+    await loadLiveHistory('today'); setInterval(refreshLive,2000);
   }catch(e){}
 }
 
