@@ -1,154 +1,548 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AutoGearUp CCTV Analytics</title><meta name="referrer" content="no-referrer">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>AutoGearUp CCTV Analytics</title>
 <style>
-:root{--bg:#07090d;--panel:#10151d;--panel2:#151c26;--line:#27303c;--text:#f3f7fb;--muted:#8f9cad;--green:#48e0a4;--blue:#5aa8ff;--amber:#f6be5c;--red:#ff6b78}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px Inter,system-ui,Segoe UI,Arial,sans-serif}.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
-aside{background:#0b0e13;border-right:1px solid var(--line);padding:22px 15px;position:sticky;top:0;height:100vh}.brand{font-size:20px;font-weight:800;margin:5px 8px 28px}.brand small{display:block;font-size:10px;color:var(--muted);font-weight:500;margin-top:4px}
-nav button{width:100%;padding:12px;border:0;border-radius:10px;text-align:left;background:transparent;color:#aeb9c8;cursor:pointer;margin:3px 0}nav button.active,nav button:hover{background:#17202b;color:white}
-.side{position:absolute;bottom:20px;left:15px;right:15px;background:#111820;border:1px solid var(--line);border-radius:12px;padding:12px;color:var(--muted);font-size:11px}.dot{width:8px;height:8px;background:var(--green);border-radius:50%;display:inline-block;margin-right:7px;box-shadow:0 0 12px var(--green)}
-header{height:70px;padding:0 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#07090de8;backdrop-filter:blur(12px);z-index:5}header h1{font-size:18px;margin:0}header p{margin:3px 0 0;color:var(--muted);font-size:11px}.pill{border:1px solid #1f684e;background:#0d2c22;color:#baf8df;padding:7px 10px;border-radius:999px;font-size:11px}
-main{padding:24px;max-width:1600px;margin:auto}.filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}.filters button,.filters input{background:#101720;color:#b6c0cc;border:1px solid var(--line);border-radius:9px;padding:8px 11px}.filters button{cursor:pointer}.filters button.active{background:white;color:#08100c}.custom{display:none;gap:7px}.custom.show{display:flex}
-.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{background:linear-gradient(#121923,#0f151c);border:1px solid var(--line);border-radius:16px;padding:16px}.stat label{color:var(--muted);font-size:11px}.num{font-size:32px;font-weight:850;margin:10px 0 4px}.sub{font-size:10px;color:var(--muted)}
-.split{display:grid;grid-template-columns:1.55fr .85fr;gap:14px;margin-top:14px}.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.head h2{font-size:14px;margin:0}.head span{color:var(--muted);font-size:10px}
-.cams{display:grid;grid-template-columns:1fr 1fr;gap:9px}.cam{aspect-ratio:16/9;border:1px solid #303a47;border-radius:12px;position:relative;overflow:hidden;background:linear-gradient(155deg,#2b3440,#11161d 42%,#252d37 43%,#151a21)}.cam:after{content:"";position:absolute;left:-10%;right:-10%;bottom:3%;height:37%;background:#303741;transform:skewY(-2deg);border-top:2px solid #47525e}.cam.live:after,.cam.live .demoOnly{display:none}.livevideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}.camstatus{position:absolute;right:8px;bottom:8px;z-index:4;background:#05080bcc;border:1px solid #384452;border-radius:999px;padding:4px 7px;font-size:8px;color:#aab6c4}.camstatus.online{color:#a7f2d3;border-color:#286b54}.cam-title,.clock{position:absolute;top:8px;z-index:3;background:#05080bbf;padding:4px 7px;border-radius:6px;font-size:9px}.cam-title{left:8px}.clock{right:8px}.vehicle{position:absolute;width:23%;height:13%;border-radius:10px 15px 4px 4px;background:#64707e;z-index:2}.person{position:absolute;width:9px;height:25px;border-radius:5px;background:#b9c3ce;z-index:2}.box{position:absolute;border:2px solid var(--blue);z-index:4;border-radius:3px}.box span{position:absolute;top:-17px;left:-2px;background:var(--blue);color:#08111b;font-size:8px;font-weight:800;padding:2px 4px;border-radius:3px;white-space:nowrap}.box.green{border-color:var(--green)}.box.green span{background:var(--green)}.box.amber{border-color:var(--amber)}.box.amber span{background:var(--amber)}
-.alerts{display:flex;flex-direction:column;gap:8px;max-height:395px;overflow:auto}.alert{display:grid;grid-template-columns:34px 1fr auto;gap:9px;padding:10px;border:1px solid #27313d;border-radius:11px;background:#111821}.ico{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:#29191d;color:#ff929d}.alert b{font-size:11px}.alert p{font-size:9px;color:var(--muted);margin:3px 0}.alert time{font-size:9px;color:#768395}
-.bottom{display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-top:14px}.chart{height:230px;display:flex;align-items:end;gap:8px;border-bottom:1px solid var(--line);padding-top:15px}.col{height:100%;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px}.bw{height:calc(100% - 20px);width:100%;display:flex;align-items:end;justify-content:center;gap:3px}.bar{width:32%;min-height:3px;border-radius:4px 4px 0 0}.people{background:var(--green)}.vehicles{background:var(--blue)}.col small{color:#728092;font-size:8px}.types{display:grid;grid-template-columns:1fr 1fr;gap:8px}.type{border:1px solid #27313d;border-radius:11px;padding:11px;background:#111821}.type span{color:var(--muted);font-size:9px}.type b{font-size:21px;display:block;margin-top:4px}.meter{height:4px;background:#27313d;border-radius:99px;margin-top:7px;overflow:hidden}.meter i{height:100%;display:block;background:var(--blue)}
-.table{margin-top:14px;overflow:auto}.table table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;padding:10px 7px;border-bottom:1px solid #202936;font-size:10px}th{color:#758295}.plate{display:inline-block;background:#edf1f4;color:#101820;font:800 10px ui-monospace,monospace;letter-spacing:.5px;padding:4px 6px;border-radius:4px}.ok{color:var(--green)}
-.view{display:none}.view.active{display:block}.big{min-height:420px}.empty{height:360px;border:1px dashed #364150;border-radius:14px;display:grid;place-items:center;color:var(--muted);text-align:center;padding:30px}.modal{position:fixed;inset:0;background:#000b;display:none;place-items:center;z-index:20}.modal.show{display:grid}.modalbox{width:min(600px,92vw);background:#111821;border:1px solid #35404d;border-radius:16px;padding:20px}.modalbox pre{white-space:pre-wrap;background:#080b0f;padding:13px;border-radius:10px;color:#a9e8cf}.modalbox button{float:right;padding:9px 14px;border-radius:9px;border:0;cursor:pointer}
-@media(max-width:1000px){.app{grid-template-columns:1fr}aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}nav{display:flex;overflow:auto}nav button{width:auto;white-space:nowrap}.side{display:none}.cards{grid-template-columns:1fr 1fr}.split,.bottom{grid-template-columns:1fr}header{top:0}}
-@media(max-width:600px){main{padding:15px}.cards{grid-template-columns:1fr 1fr}.cams{grid-template-columns:1fr}.num{font-size:26px}.custom.show{width:100%;flex-wrap:wrap}#cameras [style*="grid-template-columns:1fr 1fr auto"]{grid-template-columns:1fr!important}}
+:root{
+  --navy:#0b2f73;
+  --blue:#1769d3;
+  --blue2:#278df4;
+  --sky:#e9f4ff;
+  --sky2:#f4f9ff;
+  --green:#16b65b;
+  --orange:#ff9f1a;
+  --red:#ee3448;
+  --ink:#11336e;
+  --text:#163b75;
+  --muted:#7187a7;
+  --line:#d7e5f4;
+  --panel:#ffffff;
+  --page:#f4f9fe;
+  --shadow:0 4px 16px rgba(22,73,130,.08);
+}
+*{box-sizing:border-box}
+html{background:var(--page)}
+body{margin:0;background:var(--page);color:var(--text);font:14px Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+button,input{font:inherit}
+button{cursor:pointer}
+.app{min-height:100vh;display:grid;grid-template-columns:236px minmax(0,1fr)}
+.sidebar{position:sticky;top:0;height:100vh;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:30}
+.brand{height:66px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--line);gap:11px}
+.logo-mark{width:38px;height:34px;position:relative}
+.logo-mark:before,.logo-mark:after{content:"";position:absolute;transform:skew(-28deg);border-radius:3px}
+.logo-mark:before{width:13px;height:30px;left:6px;top:2px;background:var(--blue)}
+.logo-mark:after{width:13px;height:22px;left:20px;top:10px;background:#0a3f9b}
+.logo-cut{position:absolute;width:17px;height:9px;background:#fff;left:10px;top:18px;transform:skew(-28deg);z-index:2}
+.brand-text strong{display:block;color:#103677;font-size:20px;letter-spacing:-.6px}
+.brand-text small{display:block;color:#6e83a5;font-size:8px;font-weight:700;letter-spacing:.7px;margin-top:1px}
+.nav{padding:14px 10px;display:flex;flex-direction:column;gap:5px}
+.nav button{border:0;background:transparent;color:#173f81;border-radius:8px;padding:11px 12px;display:grid;grid-template-columns:28px 1fr auto;align-items:center;text-align:left;font-weight:650;transition:.18s}
+.nav button:hover{background:#f2f8ff}
+.nav button.active{background:linear-gradient(90deg,#e0f0ff,#edf7ff);box-shadow:inset 3px 0 0 var(--blue);color:#0d5fc9}
+.nav .ico{font-size:16px;text-align:center;color:#0f4ca5}
+.nav .badge-count{width:23px;height:23px;border-radius:50%;background:#f02c3d;color:#fff;display:grid;place-items:center;font-size:10px}
+.side-promo{margin:auto 16px 15px;background:linear-gradient(150deg,#eef7ff,#dcefff);border:1px solid #d5e7f8;border-radius:10px;padding:15px;min-height:145px;position:relative;overflow:hidden}
+.side-promo strong{font-size:16px;line-height:1.18;color:#0b3478;display:block;max-width:110px}
+.side-promo:after{content:"";position:absolute;width:130px;height:58px;border-radius:100% 10% 10% 100%;right:-28px;bottom:-8px;background:linear-gradient(160deg,#dfeaf2,#89a6be);transform:rotate(-8deg);box-shadow:inset 0 7px 0 #f7fbff}
+.side-foot{padding:0 28px 22px;color:#56729b;font-size:11px;line-height:1.55}
+.side-foot strong{display:block;color:#103c81;font-size:17px;margin-bottom:4px}
+
+.shell{min-width:0}
+.topbar{height:66px;background:rgba(255,255,255,.96);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:20px;padding:0 20px;position:sticky;top:0;z-index:20;backdrop-filter:blur(14px)}
+.top-title{display:flex;align-items:center;gap:15px;min-width:420px}
+.top-title h1{font-size:20px;color:#0d3477;margin:0;white-space:nowrap}
+.top-title .divider{width:1px;height:24px;background:#d7e3f1}
+.top-title p{margin:0;color:#6a82a6;font-size:12px;white-space:nowrap}
+.search{margin-left:auto;position:relative;width:min(310px,27vw)}
+.search input{width:100%;border:1px solid #d7e4f2;background:#f7fbff;border-radius:9px;padding:10px 12px 10px 36px;color:#214b86;outline:none}
+.search:before{content:"⌕";position:absolute;left:12px;top:8px;color:#7693bb;font-size:18px}
+.mode-pill{font-size:10px;font-weight:800;border:1px solid #c9e5d5;color:#18894d;background:#effbf4;border-radius:999px;padding:7px 10px;white-space:nowrap}
+.profile{display:flex;align-items:center;gap:9px;border-left:1px solid #dce6f2;padding-left:16px;min-width:150px}
+.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#113a84;color:white;font-weight:800}
+.profile strong{font-size:12px;color:#123872}.profile small{display:block;font-size:10px;color:#6e84a3;margin-top:2px}
+
+main{padding:14px 16px 28px;max-width:1720px;margin:0 auto}
+.view{display:none}.view.active{display:block}
+.filters{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
+.filters button,.filters input{border:1px solid #d4e2f2;background:#fff;color:#3d608c;border-radius:7px;padding:7px 10px;font-size:10px}
+.filters button.active{background:#125fc7;color:#fff;border-color:#125fc7}.custom{display:none;gap:6px;align-items:center}.custom.show{display:flex}
+
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:13px 16px;display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;min-height:102px}
+.kpi-icon{width:56px;height:56px;border-radius:11px;background:#edf6ff;display:grid;place-items:center;color:#0b4fa9;font-size:27px}
+.kpi label{display:block;color:#143c7a;font-weight:800;font-size:12px;margin-bottom:4px}.kpi .num{font-size:34px;font-weight:850;color:#0b3479;letter-spacing:-1px;line-height:1}.trend{text-align:right;font-size:10px;color:#6d83a3}.trend strong{display:block;color:#0da04d;font-size:14px;margin-bottom:3px}.trend.down strong{color:#11a05b}
+.kpi .sub{font-size:9px;color:#7187a7;margin-top:5px}
+
+.dashboard-grid{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:12px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}
+.panel-head{height:42px;border-bottom:1px solid #dce7f3;display:flex;align-items:center;justify-content:space-between;padding:0 12px}
+.panel-head h2{margin:0;color:#113a7a;font-size:16px}.panel-head .meta{font-size:10px;color:#6680a4;display:flex;align-items:center;gap:6px}.online-dot{width:9px;height:9px;background:#1db75b;border-radius:50%;display:inline-block}
+.camera-panel{overflow:hidden}
+.camera-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:7px;background:#e9f0f8}
+.cam{aspect-ratio:16/9;border-radius:5px;overflow:hidden;position:relative;background:#13263a;border:1px solid #c8d6e5;min-height:190px}
+.livevideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+.cam:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,17,36,.35),transparent 24%,transparent 70%,rgba(4,17,36,.45));z-index:2;pointer-events:none}
+.cam-top{position:absolute;left:0;right:0;top:0;z-index:4;height:29px;background:rgba(5,23,42,.78);display:flex;align-items:center;gap:10px;padding:0 9px;color:#fff}
+.cam-title{font-weight:800;font-size:12px}.cam-loc{font-size:10px;color:#d8e2ec;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.camstatus{margin-left:auto;font-size:9px;font-weight:800;display:flex;align-items:center;gap:5px}.camstatus:before{content:"";width:8px;height:8px;border-radius:50%;background:#a6afba}.camstatus.online:before{background:#22c564;box-shadow:0 0 6px #22c564}
+.camera-bottom{position:absolute;left:0;right:0;bottom:0;z-index:4;background:rgba(5,23,42,.86);height:31px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 9px;color:#fff;font-size:9px}.camera-bottom b{font-weight:800}.camera-bottom .passed{white-space:nowrap}
+.cam-empty{position:absolute;inset:30px 0 31px;z-index:0;display:grid;place-items:center;color:#aec0d4;font-size:11px}
+
+.right-rail{display:flex;flex-direction:column;gap:12px}.incidents-box{min-height:255px}.alerts{padding:5px 10px;max-height:265px;overflow:auto}.alert{display:grid;grid-template-columns:30px 1fr auto;gap:9px;align-items:center;padding:10px 0;border-bottom:1px solid #e5edf6}.alert:last-child{border-bottom:0}.ico{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#fff0f2;color:#ed3346;font-size:12px;border:1px solid #ffd7dc}.alert b{font-size:10px;color:#163d78}.alert p{font-size:9px;color:#6d83a3;margin:3px 0 0}.alert time{font-size:9px;color:#5e7ca7;white-space:nowrap}
+.breakdown{min-height:285px}.breakdown-wrap{display:grid;grid-template-columns:150px 1fr;gap:8px;align-items:center;padding:15px 14px 18px}.donut{width:132px;height:132px;border-radius:50%;background:conic-gradient(#1b58b6 0 38%,#258fe6 38% 66%,#7ea8d6 66% 80%,#59779c 80% 89%,#87a5c6 89% 96%,#9fb8d2 96% 100%);position:relative;display:grid;place-items:center;margin:auto}.donut:after{content:"";position:absolute;width:76px;height:76px;border-radius:50%;background:#fff}.donut-center{position:relative;z-index:2;text-align:center;color:#113979}.donut-center b{display:block;font-size:18px}.donut-center small{font-size:9px}.breakdown-list{display:flex;flex-direction:column;gap:9px}.breakdown-row{display:grid;grid-template-columns:10px 1fr auto;gap:7px;align-items:center;font-size:10px;color:#3c5e88}.swatch{width:9px;height:9px;border-radius:2px}.breakdown-row strong{color:#123978}
+
+.events-panel{margin-top:12px;overflow:hidden}.table-wrap{overflow:auto;padding:0 14px 10px}table{width:100%;border-collapse:collapse;min-width:820px}th{font-size:9px;text-align:left;color:#42618a;padding:8px 8px;border-bottom:1px solid #dbe7f2;background:#f7fbff}td{font-size:9px;color:#2d5586;padding:8px;border-bottom:1px solid #e7eef6}.plate{font-weight:800;color:#143a78}.ok{color:#128a4b}.event-thumb{width:43px;height:25px;border-radius:4px;background:linear-gradient(145deg,#cad7e4,#7e96aa);display:inline-block;vertical-align:middle;margin-right:7px}
+
+.analytics-layout{display:grid;grid-template-columns:1.2fr 1fr;gap:12px}.chart{height:290px;display:flex;align-items:end;gap:8px;border-bottom:1px solid #dbe7f3;padding:18px 8px 0}.col{height:100%;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px}.bw{height:calc(100% - 24px);width:100%;display:flex;align-items:end;justify-content:center;gap:3px}.bar{width:30%;min-height:3px;border-radius:4px 4px 0 0}.bar.people{background:#2aa96b}.bar.vehicles{background:#2677d4}.col small{color:#7890ae;font-size:8px}
+.types{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px}.type{border:1px solid #dbe7f3;border-radius:8px;padding:11px;background:#f9fcff}.type span{color:#6d83a4;font-size:9px}.type b{font-size:19px;color:#123978;display:block;margin-top:5px}.meter{height:4px;background:#e1eaf4;border-radius:99px;margin-top:7px;overflow:hidden}.meter i{height:100%;display:block;background:#2677d4}
+
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.settings-card{padding:16px}.settings-card h3{margin:0 0 5px;color:#113a7a}.settings-card p{font-size:10px;color:#6f85a4;line-height:1.6}.form-row{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}.form-row input{border:1px solid #d4e2f1;border-radius:8px;padding:10px;background:#f9fcff;color:#274f82}.primary-btn{border:0;background:#1769d3;color:#fff;border-radius:8px;padding:10px 14px;font-weight:800}.secondary-btn{border:1px solid #cbdbee;background:#fff;color:#285184;border-radius:8px;padding:9px 12px}.camera-connections{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.conn{border:1px solid #dbe7f3;border-radius:8px;padding:12px;background:#f9fcff}.conn b{display:block;color:#173f7c;font-size:11px}.conn small{display:block;color:#7086a5;font-size:9px;margin-top:4px}
+
+.empty{padding:40px;text-align:center;color:#7187a6}.view-title{margin:0 0 12px;color:#103978;font-size:21px}.view-sub{margin:-6px 0 14px;color:#7187a6;font-size:11px}
+.modal{position:fixed;inset:0;background:rgba(3,20,39,.55);display:none;place-items:center;z-index:60}.modal.show{display:grid}.modalbox{width:min(580px,92vw);background:#fff;border:1px solid #d6e4f2;border-radius:12px;padding:20px;box-shadow:0 24px 80px rgba(0,31,75,.2)}.modalbox h2{margin:0;color:#113a7a}.modalbox p{color:#6680a4;font-size:11px}.modalbox pre{background:#eef6ff;border:1px solid #d7e6f5;padding:12px;border-radius:8px;color:#315780;white-space:pre-wrap}.modalbox button{float:right}
+
+@media(max-width:1250px){.dashboard-grid{grid-template-columns:1fr}.right-rail{display:grid;grid-template-columns:1fr 1fr}.search{display:none}.top-title{min-width:0}.top-title p{display:none}}
+@media(max-width:950px){.app{grid-template-columns:78px 1fr}.brand{padding:0;justify-content:center}.brand-text,.nav button span:not(.ico),.nav .badge-count,.side-promo,.side-foot{display:none}.nav button{grid-template-columns:1fr;justify-items:center}.kpis{grid-template-columns:1fr 1fr}.profile>div:not(.avatar){display:none}.profile{min-width:auto}.top-title{min-width:0}.camera-grid{grid-template-columns:1fr 1fr}.settings-grid{grid-template-columns:1fr}}
+@media(max-width:680px){.app{display:block}.sidebar{position:fixed;left:0;right:0;bottom:0;top:auto;height:64px;border-top:1px solid var(--line);border-right:0;z-index:50}.brand,.side-promo,.side-foot{display:none}.nav{height:64px;flex-direction:row;padding:5px;overflow:auto;justify-content:space-around}.nav button{min-width:58px;padding:5px}.nav button:nth-child(n+6){display:none}.shell{padding-bottom:66px}.topbar{height:58px;padding:0 10px}.top-title h1{font-size:16px}.mode-pill{display:none}.profile{display:none}main{padding:10px}.kpis{grid-template-columns:1fr 1fr;gap:7px}.kpi{grid-template-columns:38px 1fr;padding:10px;min-height:82px}.kpi-icon{width:38px;height:38px;font-size:20px}.kpi .num{font-size:25px}.trend{display:none}.dashboard-grid{display:block}.camera-grid{grid-template-columns:1fr}.right-rail{display:block}.right-rail .panel{margin-top:10px}.cam{min-height:210px}.events-panel{margin-top:10px}.breakdown-wrap{grid-template-columns:120px 1fr}.donut{width:105px;height:105px}.analytics-layout,.settings-grid{grid-template-columns:1fr}.filters{overflow:auto;flex-wrap:nowrap}.custom.show{flex-wrap:wrap}.camera-connections{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="app">
-<aside><div class="brand">AutoGearUp <small>CCTV AI Analytics Demo</small></div><nav>
-<button class="active" data-view="dash">▦ Dashboard</button><button data-view="cameras">◉ Cameras</button><button data-view="history">↻ History</button><button data-view="plates">▤ License Plates</button><button data-view="incidents">⚠ Incidents</button>
-</nav><div class="side"><span class="dot"></span>4 cameras online<br><br>Demo analytics engine active</div></aside>
-<div><header><div><h1 id="title">Operations Dashboard</h1><p id="subtitle">Real-time people, vehicles, plates and incidents</p></div><span class="pill" id="modePill">● LIVE DEMO</span></header>
-<main>
-<section class="view active" id="dash">
-<div class="filters"><button class="active" data-period="today">Today</button><button data-period="week">This Week</button><button data-period="month">This Month</button><button data-period="year">This Year</button><button data-period="custom">Custom</button><div class="custom" id="custom"><input type="date" id="from"><input type="date" id="to"><button id="apply">Apply</button></div></div>
-<div class="cards"><div class="card stat"><label>PEOPLE PASSED</label><div class="num" id="people">186</div><div class="sub">Unique moving people seen by any camera</div></div><div class="card stat"><label>VEHICLES PASSED</label><div class="num" id="vehicles">421</div><div class="sub">Unique moving vehicles seen by any camera</div></div><div class="card stat"><label>READABLE PLATES</label><div class="num" id="plates">318</div><div class="sub"><span id="rate">75.5%</span> plate-read rate</div></div><div class="card stat"><label>MAJOR INCIDENTS</label><div class="num" id="incidentCount">3</div><div class="sub">Requires review</div></div></div>
-<div class="split"><div class="card"><div class="head"><h2>Live Camera Wall</h2><span id="cameraMode">4 fixed camera slots</span></div><div class="cams">
-<div class="cam" id="cam1"><img id="liveCam1" class="livevideo" alt="Camera 1" style="display:none"><span class="cam-title" id="camTitle1">CAMERA 1</span><span class="clock"></span><span class="camstatus" id="camStatus1">Not configured</span></div>
-<div class="cam" id="cam2"><img id="liveCam2" class="livevideo" alt="Camera 2" style="display:none"><span class="cam-title" id="camTitle2">CAMERA 2</span><span class="clock"></span><span class="camstatus" id="camStatus2">Not configured</span></div>
-<div class="cam" id="cam3"><img id="liveCam3" class="livevideo" alt="Camera 3" style="display:none"><span class="cam-title" id="camTitle3">CAMERA 3</span><span class="clock"></span><span class="camstatus" id="camStatus3">Not configured</span></div>
-<div class="cam" id="cam4"><img id="liveCam4" class="livevideo" alt="Camera 4" style="display:none"><span class="cam-title" id="camTitle4">CAMERA 4</span><span class="clock"></span><span class="camstatus" id="camStatus4">Not configured</span></div>
-</div></div>
-<div class="card"><div class="head"><h2>Incident Monitor</h2><span>Rules + AI</span></div><div class="alerts" id="alerts"></div></div></div>
-<div class="bottom"><div class="card"><div class="head"><h2>Traffic Activity</h2><span>People / vehicles</span></div><div class="chart" id="chart"></div></div><div class="card"><div class="head"><h2>Vehicle Types</h2><span id="typePeriod">Today</span></div><div class="types" id="types"></div></div></div>
-<div class="card table"><div class="head"><h2>Latest Vehicle Detections</h2><span>Updates every few seconds</span></div><table><thead><tr><th>TIME</th><th>CAMERA</th><th>TYPE</th><th>PLATE</th><th>CONF.</th><th>DIRECTION</th></tr></thead><tbody id="detections"></tbody></table></div>
-</section>
-<section class="view" id="cameras"><div class="card big"><div class="head"><h2>Camera Connections</h2><button id="connect">Configuration Help</button></div><div class="types" id="cameraConnections">
-<div class="type"><span>CAMERA 1</span><b>Checking…</b></div>
-<div class="type"><span>CAMERA 2</span><b>Checking…</b></div>
-<div class="type"><span>CAMERA 3</span><b>Checking…</b></div>
-<div class="type"><span>CAMERA 4</span><b>Checking…</b></div>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo-mark"><span class="logo-cut"></span></div>
+      <div class="brand-text"><strong>AutoGearUp</strong><small>DRIVE A SAFER TOMORROW</small></div>
+    </div>
+    <div class="nav">
+      <button class="active" data-view="dash"><span class="ico">⌂</span><span>Dashboard</span></button>
+      <button data-action="cameras"><span class="ico">▣</span><span>Live Cameras</span></button>
+      <button data-view="incidents"><span class="ico">⚠</span><span>Events & Alerts</span><span class="badge-count" id="sideIncidentCount">3</span></button>
+      <button data-view="plates"><span class="ico">▤</span><span>License Plate Search</span></button>
+      <button data-view="vehicle"><span class="ico">▰</span><span>Vehicle Analytics</span></button>
+      <button data-view="peopleView"><span class="ico">♟</span><span>People Analytics</span></button>
+      <button data-view="history"><span class="ico">▥</span><span>Reports</span></button>
+      <button data-view="settings"><span class="ico">⌖</span><span>Sites & Devices</span></button>
+      <button data-view="settings"><span class="ico">⚙</span><span>Settings</span></button>
+    </div>
+    <div class="side-promo"><strong>Smarter<br>Facilities<br>Safer Roads</strong></div>
+    <div class="side-foot"><strong>AutoGearUp</strong>Automotive intelligence<br>in every frame.</div>
+  </aside>
+
+  <div class="shell">
+    <header class="topbar">
+      <div class="top-title">
+        <h1 id="title">CCTV Analytics</h1>
+        <span class="divider"></span>
+        <p id="subtitle">Real-Time Insights for a Safer, Smarter Tomorrow</p>
+      </div>
+      <div class="search"><input id="globalSearch" placeholder="Search plates, cameras, or events..."></div>
+      <span class="mode-pill" id="modePill">● LIVE DEMO</span>
+      <div class="profile"><div class="avatar">JD</div><div><strong>John Doe</strong><small>Site Manager ▾</small></div></div>
+    </header>
+
+    <main>
+      <section class="view active" id="dash">
+        <div class="filters">
+          <button class="active" data-period="today">Today</button>
+          <button data-period="week">This Week</button>
+          <button data-period="month">This Month</button>
+          <button data-period="year">This Year</button>
+          <button data-period="custom">Custom</button>
+          <div class="custom" id="custom"><input type="date" id="from"><input type="date" id="to"><button id="apply">Apply</button></div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><div class="kpi-icon">♟</div><div><label>People Passed</label><div class="num" id="people">186</div><div class="sub">Unique moving people seen by any camera</div></div><div class="trend"><strong>↑ 12%</strong>vs. previous period</div></div>
+          <div class="kpi"><div class="kpi-icon">▰</div><div><label>Vehicles Passed</label><div class="num" id="vehicles">421</div><div class="sub">Unique moving vehicles seen by any camera</div></div><div class="trend"><strong>↑ 8%</strong>vs. previous period</div></div>
+          <div class="kpi"><div class="kpi-icon">▤</div><div><label>License Plates Read</label><div class="num" id="plates">318</div><div class="sub"><span id="rate">75.5%</span> readable plate rate</div></div><div class="trend"><strong>↑ 15%</strong>vs. previous period</div></div>
+          <div class="kpi"><div class="kpi-icon" style="color:#e93649">△</div><div><label>Major Incidents</label><div class="num" id="incidentCount">3</div><div class="sub">Requires review</div></div><div class="trend down"><strong>↓ 50%</strong>vs. previous period</div></div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="panel camera-panel" id="liveCameraPanel">
+            <div class="panel-head"><h2>Live Cameras</h2><div class="meta"><span class="online-dot"></span><span id="cameraMode">4 fixed camera slots</span></div></div>
+            <div class="camera-grid">
+              <div class="cam" id="cam1">
+                <div class="cam-empty">Camera 1</div>
+                <img id="liveCam1" class="livevideo" alt="Camera 1" style="display:none">
+                <div class="cam-top"><span class="cam-title" id="camTitle1">Camera 1</span><span class="cam-loc" id="camLoc1">Main Entrance</span><span class="camstatus" id="camStatus1">OFFLINE</span></div>
+                <div class="camera-bottom"><span id="camNow1">♟ Now: 0 people &nbsp;|&nbsp; ▰ 0 vehicles</span><b class="passed" id="camPassed1">Vehicles passed: 0 / 0 seen</b></div>
+              </div>
+              <div class="cam" id="cam2">
+                <div class="cam-empty">Camera 2</div>
+                <img id="liveCam2" class="livevideo" alt="Camera 2" style="display:none">
+                <div class="cam-top"><span class="cam-title" id="camTitle2">Camera 2</span><span class="cam-loc" id="camLoc2">Parking Area</span><span class="camstatus" id="camStatus2">OFFLINE</span></div>
+                <div class="camera-bottom"><span id="camNow2">♟ Now: 0 people &nbsp;|&nbsp; ▰ 0 vehicles</span><b class="passed" id="camPassed2">Vehicles passed: 0 / 0 seen</b></div>
+              </div>
+              <div class="cam" id="cam3">
+                <div class="cam-empty">Camera 3</div>
+                <img id="liveCam3" class="livevideo" alt="Camera 3" style="display:none">
+                <div class="cam-top"><span class="cam-title" id="camTitle3">Camera 3</span><span class="cam-loc" id="camLoc3">Service Bay</span><span class="camstatus" id="camStatus3">OFFLINE</span></div>
+                <div class="camera-bottom"><span id="camNow3">♟ Now: 0 people &nbsp;|&nbsp; ▰ 0 vehicles</span><b class="passed" id="camPassed3">Vehicles passed: 0 / 0 seen</b></div>
+              </div>
+              <div class="cam" id="cam4">
+                <div class="cam-empty">Camera 4</div>
+                <img id="liveCam4" class="livevideo" alt="Camera 4" style="display:none">
+                <div class="cam-top"><span class="cam-title" id="camTitle4">Camera 4</span><span class="cam-loc" id="camLoc4">Exit Gate</span><span class="camstatus" id="camStatus4">OFFLINE</span></div>
+                <div class="camera-bottom"><span id="camNow4">♟ Now: 0 people &nbsp;|&nbsp; ▰ 0 vehicles</span><b class="passed" id="camPassed4">Vehicles passed: 0 / 0 seen</b></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="right-rail">
+            <div class="panel incidents-box">
+              <div class="panel-head"><h2>Recent Incidents</h2><div class="meta">View All →</div></div>
+              <div class="alerts" id="alerts"></div>
+            </div>
+            <div class="panel breakdown">
+              <div class="panel-head"><h2>Vehicle Type Breakdown</h2><div class="meta" id="typePeriod">Today</div></div>
+              <div class="breakdown-wrap">
+                <div class="donut" id="vehicleDonut"><div class="donut-center"><b id="donutTotal">0</b><small>Vehicles</small></div></div>
+                <div class="breakdown-list" id="types"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel events-panel">
+          <div class="panel-head"><h2>Recent Events / Plate Reads</h2><div class="meta">View All →</div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th></th><th>Time</th><th>Camera</th><th>Event Type</th><th>License Plate</th><th>Confidence</th><th>Details</th></tr></thead>
+              <tbody id="detections"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="incidents">
+        <h2 class="view-title">Events & Alerts</h2><p class="view-sub">Major incidents and AI-generated review events.</p>
+        <div class="panel"><div class="panel-head"><h2>Incident Center</h2><div class="meta">Live review queue</div></div><div class="alerts" id="incidentAll"></div></div>
+      </section>
+
+      <section class="view" id="plates">
+        <h2 class="view-title">License Plate Search</h2><p class="view-sub">Search and review readable vehicle plates detected by the cameras.</p>
+        <div class="panel events-panel"><div class="panel-head"><h2>License Plate Detections</h2><div class="meta">Readable plates only</div></div><div class="table-wrap"><table><thead><tr><th>Time</th><th>Camera</th><th>Plate</th><th>Confidence</th><th>Vehicle</th><th>Direction</th></tr></thead><tbody id="plateTable"></tbody></table></div></div>
+      </section>
+
+      <section class="view" id="vehicle">
+        <h2 class="view-title">Vehicle Analytics</h2><p class="view-sub">Vehicle traffic and type breakdown across all configured cameras.</p>
+        <div class="analytics-layout">
+          <div class="panel"><div class="panel-head"><h2>Traffic Activity</h2><div class="meta">People / Vehicles</div></div><div class="chart" id="chart"></div></div>
+          <div class="panel"><div class="panel-head"><h2>Vehicle Types</h2><div class="meta">Current period</div></div><div class="types" id="vehicleTypesSecondary"></div></div>
+        </div>
+      </section>
+
+      <section class="view" id="peopleView">
+        <h2 class="view-title">People Analytics</h2><p class="view-sub">Movement trends across the monitored site.</p>
+        <div class="panel"><div class="panel-head"><h2>People & Vehicle Activity</h2><div class="meta">Current period</div></div><div class="chart" id="peopleChart"></div></div>
+      </section>
+
+      <section class="view" id="history">
+        <h2 class="view-title">Reports</h2><p class="view-sub">Historical analytics by day, week, month, year, or custom date range.</p>
+        <div class="panel" style="padding:15px"><div class="filters"><button class="active" data-period="today">Today</button><button data-period="week">This Week</button><button data-period="month">This Month</button><button data-period="year">This Year</button></div><p style="font-size:11px;color:#7086a5;line-height:1.7">Use the period controls to query stored people, vehicle, plate, and incident events. The dashboard keeps the same live totals and history database used by the camera gateway.</p></div>
+      </section>
+
+      <section class="view" id="settings">
+        <h2 class="view-title">Sites & Devices</h2><p class="view-sub">Camera status and secure remote connection settings.</p>
+        <div class="settings-grid">
+          <div class="panel settings-card">
+            <h3>Camera Connections</h3><p>Four fixed RTSP camera slots are configured privately in the gateway .env file.</p>
+            <div class="camera-connections" id="cameraConnections">
+              <div class="conn"><b>Camera 1</b><small>Checking…</small></div>
+              <div class="conn"><b>Camera 2</b><small>Checking…</small></div>
+              <div class="conn"><b>Camera 3</b><small>Checking…</small></div>
+              <div class="conn"><b>Camera 4</b><small>Checking…</small></div>
+            </div>
+          </div>
+          <div class="panel settings-card">
+            <h3>Remote Connection</h3><p>Connect the public GitHub dashboard to the authenticated shop relay.</p>
+            <div class="form-row">
+              <input id="remoteGateway" placeholder="https://xxxxx.trycloudflare.com">
+              <input id="remoteKey" type="password" placeholder="Remote access key">
+              <button class="primary-btn" id="remoteConnect">Connect Securely</button>
+              <div id="remoteMessage" style="font-size:10px;color:#6981a2;min-height:16px"></div>
+              <button class="secondary-btn" id="connect">Configuration Help</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
 </div>
-<div style="margin-top:18px;border-top:1px solid var(--line);padding-top:16px">
-<div class="head"><h2>Remote Connection</h2><span>For the public GitHub Pages dashboard</span></div>
-<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px">
-<input id="remoteGateway" placeholder="https://xxxxx.trycloudflare.com" style="background:#0b1016;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px">
-<input id="remoteKey" type="password" placeholder="Remote access key" style="background:#0b1016;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px">
-<button id="remoteConnect" style="border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer">Connect</button>
-</div>
-<div id="remoteMessage" style="margin-top:8px;color:var(--muted);font-size:11px"></div>
-</div>
-<p style="color:var(--muted);line-height:1.7;margin-top:18px">Four fixed RTSP camera slots are configured privately in the gateway <code>.env</code> file. RTSP credentials are never placed in GitHub.</p></div></section>
-<section class="view" id="history"><div class="card"><div class="head"><h2>Historical Analytics</h2><span>Today · Week · Month · Year · Custom</span></div><p style="color:var(--muted);line-height:1.8">The same dashboard metrics are designed to be queried from stored detection events by date range, camera, vehicle type, plate confidence, direction and incident severity.</p></div></section>
-<section class="view" id="plates"><div class="card table"><div class="head"><h2>License Plate Detections</h2><span>Readable plates only</span></div><table><thead><tr><th>TIME</th><th>CAMERA</th><th>PLATE</th><th>CONFIDENCE</th><th>TYPE</th><th>DIRECTION</th></tr></thead><tbody id="plateTable"></tbody></table></div></section>
-<section class="view" id="incidents"><div class="card"><div class="head"><h2>Incident Center</h2><span>Review queue</span></div><div class="alerts" id="incidentAll"></div></div></section>
-</main></div></div>
-<div class="modal" id="modal"><div class="modalbox"><h2>Four-camera configuration</h2><p>Put the four RTSP links in <code>gateway/.env</code>. The gateway keeps the credentials local.</p><pre>CAMERA1_RTSP_URL=rtsp://...
+
+<div class="modal" id="modal">
+  <div class="modalbox">
+    <h2>Four-camera configuration</h2>
+    <p>Put the four RTSP links in gateway/.env. The gateway keeps the credentials local.</p>
+    <pre>CAMERA1_RTSP_URL=rtsp://...
 CAMERA2_RTSP_URL=rtsp://...
 CAMERA3_RTSP_URL=rtsp://...
-CAMERA4_RTSP_URL=rtsp://...</pre><button id="close">Close</button></div></div>
+CAMERA4_RTSP_URL=rtsp://...</pre>
+    <button class="secondary-btn" id="close">Close</button>
+  </div>
+</div>
+
 <script>
-const base={p:186,v:421,l:318,i:3},mult={today:1,week:6.8,month:29.2,year:354},shares=[['Sedan',34],['SUV',31],['Pickup',14],['Van',10],['Hatchback',7],['Other',4]];
-const datasets={today:[[8,15],[12,29],[18,41],[25,52],[34,63],[40,70],[32,61],[22,48],[15,31]],week:[[86,202],[120,310],[154,352],[178,420],[201,465],[225,510],[190,435]],month:[[310,730],[365,860],[430,985],[510,1120],[580,1240],[650,1390],[610,1320],[690,1495],[720,1510],[760,1630]],year:[[3100,7200],[3450,8100],[3720,8600],[3980,9300],[4220,9850],[4590,10400],[4770,11100],[5030,11950],[5310,12500],[5560,13200],[5840,13900],[6120,14500]]};
-const labels={today:['8A','9A','10A','11A','12P','1P','2P','3P','4P'],week:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],month:['W1','','W2','','W3','','W4','','',''],year:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']};
-const inc=[['⚠','Vehicle stopped in restricted zone','Cam 03 · stationary > 4 minutes','12:28 PM'],['↯','Rapid vehicle movement','Cam 02 · movement threshold exceeded','11:42 AM'],['♟','Person entered restricted zone','Cam 04 · rule triggered','09:18 AM'],['✓','Possible fall event reviewed','Cam 01 · cleared by operator','Yesterday']];
-let liveMode=false,remoteBase='',remoteAccessKey='',period='today',bump={p:0,v:0,l:0},rows=[['12:37:44','Cam 02','SUV','CXRP 219','98%','Inbound'],['12:35:18','Cam 03','Van','BYVD 608','94%','Outbound'],['12:31:52','Cam 01','Sedan','KJMT 441','91%','Inbound'],['12:26:03','Cam 04','Pickup','—','—','Outbound'],['12:20:47','Cam 02','Hatchback','CSPM 701','87%','Inbound']];
-const fmt=n=>Math.round(n).toLocaleString();
-function stats(m=1,label='Today'){people.textContent=fmt(base.p*m+(period==='today'?bump.p:0));vehicles.textContent=fmt(base.v*m+(period==='today'?bump.v:0));plates.textContent=fmt(base.l*m+(period==='today'?bump.l:0));incidentCount.textContent=fmt(base.i*Math.max(1,Math.pow(m,.7)));rate.textContent=(base.l/base.v*100).toFixed(1)+'%';typePeriod.textContent=label;types.innerHTML=shares.map(x=>'<div class="type"><span>'+x[0].toUpperCase()+'</span><b>'+fmt((base.v*m+(period==='today'?bump.v:0))*x[1]/100)+'</b><div class="meter"><i style="width:'+Math.min(100,x[1]*2.2)+'%"></i></div></div>').join('');draw(period)}
-function draw(p){let d=datasets[p]||datasets.week,l=labels[p]||labels.week,m=Math.max(...d.flat());chart.innerHTML=d.map((x,i)=>'<div class="col"><div class="bw"><i class="bar people" style="height:'+x[0]/m*100+'%"></i><i class="bar vehicles" style="height:'+x[1]/m*100+'%"></i></div><small>'+(l[i]||'')+'</small></div>').join('')}
-function tables(){detections.innerHTML=rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+(r[3]==='—'?'—':'<span class="plate">'+r[3]+'</span>')+'</td><td class="ok">'+r[4]+'</td><td>'+r[5]+'</td></tr>').join('');plateTable.innerHTML=rows.filter(r=>r[3]!=='—').map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td><span class="plate">'+r[3]+'</span></td><td class="ok">'+r[4]+'</td><td>'+r[2]+'</td><td>'+r[5]+'</td></tr>').join('')}
-function incidents(){let h=inc.map(x=>'<div class="alert"><div class="ico">'+x[0]+'</div><div><b>'+x[1]+'</b><p>'+x[2]+'</p></div><time>'+x[3]+'</time></div>').join('');alerts.innerHTML=h;incidentAll.innerHTML=h}
-function clock(){document.querySelectorAll('.clock').forEach(x=>x.textContent=new Date().toLocaleTimeString([],{hour12:false}))}
-function plateGen(){const a='ABCDEFGHJKLMNPRSTUVWXYZ',p=()=>a[Math.floor(Math.random()*a.length)];return p()+p()+p()+p()+' '+Math.floor(100+Math.random()*899)}
-function sim(){if(liveMode||period!=='today')return;if(Math.random()>.35){bump.v++;let read=Math.random()>.23;if(read)bump.l++;let ts=new Date().toLocaleTimeString([],{hour12:false}),t=['Sedan','SUV','Pickup','Van','Hatchback'][Math.floor(Math.random()*5)];rows.unshift([ts,'Cam 0'+(1+Math.floor(Math.random()*4)),t,read?plateGen():'—',read?(86+Math.floor(Math.random()*13))+'%':'—',Math.random()>.5?'Inbound':'Outbound']);rows=rows.slice(0,8);tables()}if(Math.random()>.6)bump.p++;stats()}
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(b.dataset.view).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');let map={dash:['Operations Dashboard','Real-time people, vehicles, plates and incidents'],cameras:['Cameras','CCTV feed and gateway management'],history:['Historical Analytics','Past data and reporting'],plates:['License Plates','Readable vehicle plate events'],incidents:['Incident Center','Major events and review queue']};title.textContent=map[b.dataset.view][0];subtitle.textContent=map[b.dataset.view][1]});
-document.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-period]').forEach(x=>x.classList.remove('active'));b.classList.add('active');period=b.dataset.period;custom.classList.toggle('show',period==='custom');if(period!=='custom'){if(liveMode)loadLiveHistory(period);else stats(mult[period],{today:'Today',week:'This Week',month:'This Month',year:'This Year'}[period])}});
-apply.onclick=()=>{let d=Math.max(1,(new Date(to.value)-new Date(from.value))/86400000+1);period='custom';if(liveMode)loadLiveHistory('custom',from.value,to.value);else{stats(d*.98,d+' day range');draw(d<=2?'today':d<=10?'week':d<=60?'month':'year')}};
-connect.onclick=()=>modal.classList.add('show');close.onclick=()=>modal.classList.remove('show');
-let now=new Date();to.value=now.toISOString().slice(0,10);now.setDate(now.getDate()-6);from.value=now.toISOString().slice(0,10);
-incidents();tables();stats();clock();setInterval(clock,1000);setInterval(sim,3000);
-function renderLiveData(d,label){
-  people.textContent=fmt(d.people_passed||0); vehicles.textContent=fmt(d.vehicles_passed||0); plates.textContent=fmt(d.readable_plates||0); incidentCount.textContent=fmt(d.major_incidents||0);
-  rate.textContent=((d.vehicles_passed||0)>0?((d.readable_plates||0)/(d.vehicles_passed||1)*100):0).toFixed(1)+'%';
-  const vt=d.vehicle_types||{}; const total=Math.max(1,Object.values(vt).reduce((a,b)=>a+b,0));
-  const order=['car','truck','bus','motorcycle'];
-  types.innerHTML=order.map(k=>'<div class="type"><span>'+k.toUpperCase()+'</span><b>'+fmt(vt[k]||0)+'</b><div class="meter"><i style="width:'+Math.min(100,((vt[k]||0)/total)*100)+'%"></i></div></div>').join('');
-  typePeriod.textContent=label||'Live';
-  const pmap={}; (d.latest_plates||[]).forEach(p=>pmap[p.camera+':'+p.track_id]=p);
-  rows=(d.latest_events||[]).slice(0,8).map(e=>{const p=pmap[e.camera+':'+e.track_id];return[(e.time||'').split(' ').pop()||'', e.camera_name||('Camera '+e.camera), (e.type||'').replace(/^./,x=>x.toUpperCase()), p?p.plate:'—', Math.round((e.confidence||0)*100)+'%', (e.direction||'').replace(/^./,x=>x.toUpperCase())]});
-  tables();
-  const incidentRows=d.incidents||[];
-  if(incidentRows.length){const h=incidentRows.map(x=>'<div class="alert"><div class="ico">⚠</div><div><b>'+((x.type||'incident').replaceAll('_',' '))+'</b><p>'+(x.camera_name||('Camera '+x.camera))+' · '+(x.description||'')+'</p></div><time>'+((x.time||'').split(' ').pop()||'')+'</time></div>').join('');alerts.innerHTML=h;incidentAll.innerHTML=h;}
-  else {alerts.innerHTML='<div class="empty" style="height:120px">No incidents in this period.</div>';incidentAll.innerHTML=alerts.innerHTML;}
+const base={p:186,v:421,l:318,i:3};
+const mult={today:1,week:6.8,month:29.2,year:354};
+const shares=[['Sedan',38],['SUV',28],['Pickup',14],['Van',9],['Truck',7],['Motorcycle',4]];
+const datasets={
+  today:[[8,15],[12,29],[18,41],[25,52],[34,63],[40,70],[32,61],[22,48],[15,31]],
+  week:[[86,202],[120,310],[154,352],[178,420],[201,465],[225,510],[190,435]],
+  month:[[310,730],[365,860],[430,985],[510,1120],[580,1240],[650,1390],[610,1320],[690,1495],[720,1510],[760,1630]],
+  year:[[3100,7200],[3450,8100],[3720,8600],[3980,9300],[4220,9850],[4590,10400],[4770,11100],[5030,11950],[5310,12500],[5560,13200],[5840,13900],[6120,14500]]
+};
+const labels={
+  today:['8A','9A','10A','11A','12P','1P','2P','3P','4P'],
+  week:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+  month:['W1','','W2','','W3','','W4','','',''],
+  year:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+};
+const inc=[
+  ['△','Vehicle in Restricted Area','Camera 2 · Parking Area','10:24 AM'],
+  ['△','Loitering Detected','Camera 1 · Main Entrance','09:41 AM'],
+  ['△','Possible Collision','Camera 4 · Exit Gate','08:17 AM']
+];
+let liveMode=false,remoteBase='',remoteAccessKey='',period='today',bump={p:0,v:0,l:0};
+let rows=[
+  ['10:24:33 AM','Camera 2','Plate Read','NED 7421','98%','SUV · White · Exited parking'],
+  ['10:23:11 AM','Camera 1','Person Detected','—','—','1 person · Entered premises'],
+  ['10:21:48 AM','Camera 4','Plate Read','NBT 3187','96%','Sedan · Silver · Exited gate'],
+  ['10:20:12 AM','Camera 3','Vehicle Detected','—','—','SUV · Black · Service bay'],
+  ['10:19:05 AM','Camera 2','Plate Read','AAX 5620','97%','Pickup · White · Entered parking']
+];
+
+const $=id=>document.getElementById(id);
+const fmt=n=>Math.round(Number(n)||0).toLocaleString();
+
+function updateBreakdown(entries,total){
+  const palette=['#1b58b6','#258fe6','#7ea8d6','#59779c','#87a5c6','#9fb8d2'];
+  const clean=entries.filter(x=>Number(x[1])>=0);
+  const sum=Math.max(1,clean.reduce((a,x)=>a+Number(x[1]),0));
+  let cursor=0,segments=[];
+  clean.forEach((x,i)=>{
+    const pct=(Number(x[1])/sum)*100;
+    segments.push(palette[i%palette.length]+' '+cursor.toFixed(1)+'% '+(cursor+pct).toFixed(1)+'%');
+    cursor+=pct;
+  });
+  $('vehicleDonut').style.background='conic-gradient('+segments.join(',')+')';
+  $('donutTotal').textContent=fmt(total);
+  $('types').innerHTML=clean.map((x,i)=>{
+    const pct=Math.round((Number(x[1])/sum)*100);
+    return '<div class="breakdown-row"><span class="swatch" style="background:'+palette[i%palette.length]+'"></span><span>'+x[0]+'</span><strong>'+pct+'%</strong></div>';
+  }).join('');
+  const secondary=$('vehicleTypesSecondary');
+  if(secondary){
+    secondary.innerHTML=clean.map((x,i)=>'<div class="type"><span>'+x[0].toUpperCase()+'</span><b>'+fmt(x[1])+'</b><div class="meter"><i style="width:'+Math.min(100,(Number(x[1])/sum)*100)+'%"></i></div></div>').join('');
+  }
 }
+
+function stats(m=1,label='Today'){
+  const pv=base.p*m+(period==='today'?bump.p:0);
+  const vv=base.v*m+(period==='today'?bump.v:0);
+  const ll=base.l*m+(period==='today'?bump.l:0);
+  $('people').textContent=fmt(pv);
+  $('vehicles').textContent=fmt(vv);
+  $('plates').textContent=fmt(ll);
+  $('incidentCount').textContent=fmt(base.i*Math.max(1,Math.pow(m,.7)));
+  $('sideIncidentCount').textContent=$('incidentCount').textContent;
+  $('rate').textContent=(base.l/base.v*100).toFixed(1)+'%';
+  $('typePeriod').textContent=label;
+  updateBreakdown(shares.map(x=>[x[0],vv*x[1]/100]),vv);
+  draw(period);
+}
+
+function draw(p){
+  const d=datasets[p]||datasets.week,l=labels[p]||labels.week,m=Math.max(...d.flat());
+  const chartHtml=d.map((x,i)=>'<div class="col"><div class="bw"><i class="bar people" style="height:'+(x[0]/m*100)+'%"></i><i class="bar vehicles" style="height:'+(x[1]/m*100)+'%"></i></div><small>'+(l[i]||'')+'</small></div>').join('');
+  $('chart').innerHTML=chartHtml;
+  $('peopleChart').innerHTML=chartHtml;
+}
+
+function tables(){
+  $('detections').innerHTML=rows.map(r=>'<tr><td><span class="event-thumb"></span></td><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td class="plate">'+r[3]+'</td><td class="ok">'+r[4]+'</td><td>'+r[5]+'</td></tr>').join('');
+  $('plateTable').innerHTML=rows.filter(r=>r[3]!=='—').map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td class="plate">'+r[3]+'</td><td class="ok">'+r[4]+'</td><td>'+r[2]+'</td><td>'+r[5]+'</td></tr>').join('');
+}
+
+function incidents(){
+  const h=inc.map((x,i)=>'<div class="alert"><div class="ico" style="'+(i===1?'color:#f39a16;background:#fff7e8;border-color:#ffe5b3':'')+'">'+x[0]+'</div><div><b>'+x[1]+'</b><p>'+x[2]+'</p></div><time>'+x[3]+' ›</time></div>').join('');
+  $('alerts').innerHTML=h;
+  $('incidentAll').innerHTML=h;
+}
+
+function sim(){
+  if(liveMode||period!=='today')return;
+  if(Math.random()>.35){
+    bump.v++;
+    if(Math.random()>.23)bump.l++;
+  }
+  if(Math.random()>.6)bump.p++;
+  stats();
+}
+
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===id||(id==='dash'&&b.dataset.action==='cameras')));
+  const labelsMap={
+    dash:['CCTV Analytics','Real-Time Insights for a Safer, Smarter Tomorrow'],
+    incidents:['Events & Alerts','Review important incidents detected by AI'],
+    plates:['License Plate Search','Search readable plate detections'],
+    vehicle:['Vehicle Analytics','Traffic, movement and vehicle-type insights'],
+    peopleView:['People Analytics','People movement across monitored cameras'],
+    history:['Reports','Historical activity and analytics'],
+    settings:['Sites & Devices','Camera and secure gateway configuration']
+  };
+  const x=labelsMap[id]||labelsMap.dash;
+  $('title').textContent=x[0];$('subtitle').textContent=x[1];
+}
+
+document.querySelectorAll('.nav button').forEach(b=>{
+  b.onclick=()=>{
+    if(b.dataset.action==='cameras'){
+      showView('dash');
+      setTimeout(()=>$('liveCameraPanel').scrollIntoView({behavior:'smooth',block:'start'}),50);
+    }else{
+      showView(b.dataset.view);
+    }
+  };
+});
+
+document.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-period]').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  period=b.dataset.period;
+  $('custom').classList.toggle('show',period==='custom');
+  if(period!=='custom'){
+    if(liveMode)loadLiveHistory(period);
+    else stats(mult[period],{today:'Today',week:'This Week',month:'This Month',year:'This Year'}[period]);
+  }
+});
+
+$('apply').onclick=()=>{
+  let d=Math.max(1,(new Date($('to').value)-new Date($('from').value))/86400000+1);
+  period='custom';
+  if(liveMode)loadLiveHistory('custom',$('from').value,$('to').value);
+  else{
+    stats(d*.98,d+' day range');
+    draw(d<=2?'today':d<=10?'week':d<=60?'month':'year');
+  }
+};
+
+$('connect').onclick=()=>$('modal').classList.add('show');
+$('close').onclick=()=>$('modal').classList.remove('show');
+
+const now=new Date();
+$('to').value=now.toISOString().slice(0,10);
+now.setDate(now.getDate()-6);
+$('from').value=now.toISOString().slice(0,10);
+
+function renderLiveData(d,label){
+  $('people').textContent=fmt(d.people_passed||0);
+  $('vehicles').textContent=fmt(d.vehicles_passed||0);
+  $('plates').textContent=fmt(d.readable_plates||0);
+  $('incidentCount').textContent=fmt(d.major_incidents||0);
+  $('sideIncidentCount').textContent=$('incidentCount').textContent;
+  $('rate').textContent=((d.vehicles_passed||0)>0?((d.readable_plates||0)/(d.vehicles_passed||1)*100):0).toFixed(1)+'%';
+  $('typePeriod').textContent=label||'Live';
+
+  const vt=d.vehicle_types||{};
+  const vehicleEntries=Object.keys(vt).length?Object.entries(vt).map(x=>[x[0].replace(/^./,a=>a.toUpperCase()),x[1]]):[['Car',0],['Truck',0],['Bus',0],['Motorcycle',0]];
+  updateBreakdown(vehicleEntries,d.vehicles_passed||0);
+
+  const pmap={};
+  (d.latest_plates||[]).forEach(p=>pmap[p.camera+':'+p.track_id]=p);
+  rows=(d.latest_events||[]).slice(0,12).map(e=>{
+    const p=pmap[e.camera+':'+e.track_id];
+    const type=(e.type||'Event').replace(/^./,x=>x.toUpperCase());
+    const detail=type+(e.direction?' · '+e.direction:'');
+    return [
+      (e.time||'').split(' ').pop()||'',
+      e.camera_name||('Camera '+e.camera),
+      p?'Plate Read':(type==='Person'?'Person Detected':'Vehicle Detected'),
+      p?p.plate:'—',
+      Math.round((p?p.confidence:e.confidence||0)*100)+'%',
+      detail
+    ];
+  });
+  tables();
+
+  const incidentRows=d.incidents||[];
+  if(incidentRows.length){
+    const h=incidentRows.slice(0,8).map((x,i)=>'<div class="alert"><div class="ico">△</div><div><b>'+((x.type||'Incident').replaceAll('_',' '))+'</b><p>'+(x.camera_name||('Camera '+x.camera))+' · '+(x.description||'')+'</p></div><time>'+((x.time||'').split(' ').pop()||'')+' ›</time></div>').join('');
+    $('alerts').innerHTML=h;
+    $('incidentAll').innerHTML=h;
+  }else{
+    $('alerts').innerHTML='<div class="empty">No incidents in this period.</div>';
+    $('incidentAll').innerHTML=$('alerts').innerHTML;
+  }
+}
+
 async function loadLiveHistory(p=period,startDate='',endDate=''){
   if(!liveMode)return;
   try{
     const qs=new URLSearchParams({period:p});
-    if(startDate)qs.set('start',startDate); if(endDate)qs.set('end',endDate);
-    const path=(remoteBase?remoteBase+'/history':'/api/history')+'?'+qs.toString()+(remoteBase?'&key='+encodeURIComponent(remoteAccessKey):''); const r=await fetch(path,{cache:'no-store'}); if(!r.ok)return;
+    if(startDate)qs.set('start',startDate);
+    if(endDate)qs.set('end',endDate);
+    const path=(remoteBase?remoteBase+'/history':'/api/history')+'?'+qs.toString()+(remoteBase?'&key='+encodeURIComponent(remoteAccessKey):'');
+    const r=await fetch(path,{cache:'no-store'});
+    if(!r.ok)return;
     const d=await r.json();
-    const labelsMap={today:'Today',week:'This Week',month:'This Month',year:'This Year',custom:'Custom'};
-    renderLiveData(d,labelsMap[p]||'Live');
+    renderLiveData(d,{today:'Today',week:'This Week',month:'This Month',year:'This Year',custom:'Custom'}[p]||'Live');
   }catch(e){}
 }
+
 async function refreshLive(){
   if(!liveMode)return;
-  if(period==='custom') await loadLiveHistory('custom',from.value,to.value);
+  if(period==='custom')await loadLiveHistory('custom',$('from').value,$('to').value);
   else await loadLiveHistory(period);
 }
+
 function renderCameraHealth(cameras){
   const cards=[];
   cameras.forEach(cam=>{
-    const id=cam.id, box=document.getElementById('cam'+id), img=document.getElementById('liveCam'+id), title=document.getElementById('camTitle'+id), status=document.getElementById('camStatus'+id);
+    const id=cam.id;
+    const box=$('cam'+id),img=$('liveCam'+id),title=$('camTitle'+id),status=$('camStatus'+id);
+    if(!box||!img||!title||!status)return;
     title.textContent=cam.name||('Camera '+id);
-    const nowDetected=(cam.current_people||0)+' person'+((cam.current_people||0)===1?'':'s')+' · '+(cam.current_vehicles||0)+' vehicle'+((cam.current_vehicles||0)===1?'':'s');
-    status.textContent=cam.configured?(cam.online?(cam.analytics_enabled?(nowDetected+' · '+(cam.vehicles_passed||0)+'/'+(cam.vehicles_seen||0)+' vehicles passed/seen'):'Video only · AI unavailable'):cam.status):'Not configured';
+    status.textContent=cam.configured?(cam.online?'LIVE':String(cam.status||'OFFLINE').toUpperCase()):'OFFLINE';
     status.classList.toggle('online',!!cam.online);
+
+    const nowEl=$('camNow'+id),passEl=$('camPassed'+id);
+    if(nowEl)nowEl.textContent='♟ Now: '+(cam.current_people||0)+' people  |  ▰ '+(cam.current_vehicles||0)+' vehicles';
+    if(passEl)passEl.textContent='Vehicles passed: '+(cam.vehicles_passed||0)+' / '+(cam.vehicles_seen||0)+' seen';
+
     if(cam.configured){
-      box.classList.add('live');
-      const wanted=remoteBase?(remoteBase+'/cameras/'+id+'/stream?key='+encodeURIComponent(remoteAccessKey)):('/api/cameras/'+id+'/stream'); if(!img.src||!img.src.startsWith(wanted))img.src=wanted+(wanted.includes('?')?'&':'?')+'t='+Date.now();
+      const wanted=remoteBase?(remoteBase+'/cameras/'+id+'/stream?key='+encodeURIComponent(remoteAccessKey)):('/api/cameras/'+id+'/stream');
+      if(!img.src||!img.src.startsWith(wanted))img.src=wanted+(wanted.includes('?')?'&':'?')+'t='+Date.now();
       img.style.display='block';
     }else{
-      box.classList.remove('live');
       img.style.display='none';
       img.removeAttribute('src');
     }
-    cards.push('<div class="type"><span>'+String(cam.name||('CAMERA '+id)).toUpperCase()+'</span><b style="font-size:14px">'+(cam.configured?(cam.online?((cam.current_people||0)+' people · '+(cam.current_vehicles||0)+' vehicles · '+(cam.vehicles_passed||0)+'/'+(cam.vehicles_seen||0)+' passed/seen'+(cam.model?' · '+cam.model:'')):cam.status):'Not configured')+'</b></div>');
+
+    cards.push('<div class="conn"><b>'+String(cam.name||('Camera '+id))+'</b><small>'+(cam.configured?(cam.online?'Online · '+(cam.model||'video'):'Status: '+cam.status):'Not configured')+'</small></div>');
   });
-  cameraConnections.innerHTML=cards.join('');
+  $('cameraConnections').innerHTML=cards.join('');
 }
+
 async function refreshCameraHealth(){
   if(!liveMode)return;
   try{
-    const healthUrl=remoteBase?(remoteBase+'/health?key='+encodeURIComponent(remoteAccessKey)):'/api/health'; const r=await fetch(healthUrl,{cache:'no-store'}); if(!r.ok)return;
-    const h=await r.json(); renderCameraHealth(h.cameras||[]);
-    cameraMode.textContent=h.online_count+' of '+h.camera_count+' configured cameras online';
-    const side=document.querySelector('.side'); if(side)side.innerHTML='<span class="dot"></span>'+h.online_count+' / '+h.camera_count+' cameras online<br><br>Local gateway active';
+    const healthUrl=remoteBase?(remoteBase+'/health?key='+encodeURIComponent(remoteAccessKey)):'/api/health';
+    const r=await fetch(healthUrl,{cache:'no-store'});
+    if(!r.ok)return;
+    const h=await r.json();
+    renderCameraHealth(h.cameras||[]);
+    $('cameraMode').textContent=h.online_count===h.camera_count&&h.camera_count>0?'All Cameras Online':(h.online_count+' / '+h.camera_count+' Cameras Online');
   }catch(e){}
 }
+
 function loadRemoteSettings(){
   const hash=new URLSearchParams(location.hash.replace(/^#/,''));
-  const hashGateway=hash.get('gateway'), hashKey=hash.get('key');
+  const hashGateway=hash.get('gateway'),hashKey=hash.get('key');
   if(hashGateway&&hashKey){
     localStorage.setItem('cctv_remote_gateway',hashGateway.replace(/\/$/,''));
     localStorage.setItem('cctv_remote_key',hashKey);
@@ -156,50 +550,74 @@ function loadRemoteSettings(){
   }
   remoteBase=(localStorage.getItem('cctv_remote_gateway')||'').replace(/\/$/,'');
   remoteAccessKey=localStorage.getItem('cctv_remote_key')||'';
-  if(document.getElementById('remoteGateway'))remoteGateway.value=remoteBase;
-  if(document.getElementById('remoteKey'))remoteKey.value=remoteAccessKey;
+  $('remoteGateway').value=remoteBase;
+  $('remoteKey').value=remoteAccessKey;
 }
+
 async function connectRemote(){
-  const g=remoteGateway.value.trim().replace(/\/$/,'');
-  const k=remoteKey.value.trim();
-  if(!g||!k){remoteMessage.textContent='Enter the tunnel URL and access key.';return;}
-  if(!g.startsWith('https://')){remoteMessage.textContent='Remote gateway must use HTTPS.';return;}
-  remoteBase=g; remoteAccessKey=k;
+  const g=$('remoteGateway').value.trim().replace(/\/$/,'');
+  const k=$('remoteKey').value.trim();
+  if(!g||!k){$('remoteMessage').textContent='Enter the tunnel URL and access key.';return;}
+  if(!g.startsWith('https://')){$('remoteMessage').textContent='Remote gateway must use HTTPS.';return;}
+  remoteBase=g;remoteAccessKey=k;
   localStorage.setItem('cctv_remote_gateway',g);
   localStorage.setItem('cctv_remote_key',k);
-  remoteMessage.textContent='Connecting…';
+  $('remoteMessage').textContent='Connecting…';
   try{
     const r=await fetch(remoteBase+'/health?key='+encodeURIComponent(remoteAccessKey),{cache:'no-store'});
     if(!r.ok)throw new Error('Connection rejected');
     const h=await r.json();
-    liveMode=true; renderCameraHealth(h.cameras||[]);
-    modePill.textContent='● REMOTE LIVE';
-    subtitle.textContent='Secure remote four-camera analytics';
-    cameraMode.textContent=h.online_count+' of '+h.camera_count+' configured cameras online';
-    remoteMessage.textContent='Connected securely.';
+    liveMode=true;
+    renderCameraHealth(h.cameras||[]);
+    $('modePill').textContent='● REMOTE LIVE';
+    $('modePill').style.color='#18894d';
+    $('cameraMode').textContent=h.online_count===h.camera_count?'All Cameras Online':(h.online_count+' / '+h.camera_count+' Cameras Online');
+    $('remoteMessage').textContent='Connected securely.';
     await loadLiveHistory(period);
-    if(!window.cctvRemoteTimers){window.cctvRemoteTimers=true;setInterval(refreshLive,2000);setInterval(refreshCameraHealth,5000);}
-  }catch(e){remoteMessage.textContent='Could not connect. Check the tunnel URL and access key.';}
+    if(!window.cctvRemoteTimers){
+      window.cctvRemoteTimers=true;
+      setInterval(refreshLive,2000);
+      setInterval(refreshCameraHealth,5000);
+    }
+  }catch(e){
+    $('remoteMessage').textContent='Could not connect. Check the tunnel URL and access key.';
+  }
 }
-remoteConnect.onclick=connectRemote;
-loadRemoteSettings();
-checkGateway();
+
+$('remoteConnect').onclick=connectRemote;
+
 async function checkGateway(){
   try{
     if(remoteBase&&remoteAccessKey){await connectRemote();return;}
-    const r=await fetch('/api/health',{cache:'no-store'}); if(!r.ok)return;
-    const h=await r.json(); if(!h.ok)return;
+    const r=await fetch('/api/health',{cache:'no-store'});
+    if(!r.ok)return;
+    const h=await r.json();
+    if(!h.ok)return;
     liveMode=true;
-    modePill.textContent='● LIVE CCTV';
-    subtitle.textContent='Live four-camera analytics from local gateway';
+    $('modePill').textContent='● LIVE CCTV';
     renderCameraHealth(h.cameras||[]);
-    cameraMode.textContent=h.online_count+' of '+h.camera_count+' configured cameras online';
-    const side=document.querySelector('.side'); if(side)side.innerHTML='<span class="dot"></span>'+h.online_count+' / '+h.camera_count+' cameras online<br><br>Local gateway active';
+    $('cameraMode').textContent=h.online_count===h.camera_count?'All Cameras Online':(h.online_count+' / '+h.camera_count+' Cameras Online');
     await loadLiveHistory('today');
     setInterval(refreshLive,2000);
     setInterval(refreshCameraHealth,5000);
-  }catch(e){if(location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){modePill.textContent='● REMOTE SETUP';subtitle.textContent='Open Cameras to connect the shop gateway securely';}}
+  }catch(e){
+    if(location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){
+      $('modePill').textContent='● REMOTE SETUP';
+    }
+  }
 }
 
+$('globalSearch').addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  document.querySelectorAll('#detections tr').forEach(tr=>tr.style.display=!q||tr.innerText.toLowerCase().includes(q)?'':'none');
+});
+
+incidents();
+tables();
+stats();
+loadRemoteSettings();
+checkGateway();
+setInterval(sim,3000);
 </script>
-</body></html>
+</body>
+</html>
