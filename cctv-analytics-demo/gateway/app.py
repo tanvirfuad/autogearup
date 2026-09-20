@@ -1,4 +1,9 @@
-import os, re, time, threading, sqlite3
+import os
+import re
+import time
+import math
+import threading
+import sqlite3
 from datetime import datetime, timedelta
 from collections import defaultdict, deque
 from pathlib import Path
@@ -12,60 +17,58 @@ from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
 
-DETECT_EVERY = max(1, int(os.getenv("DETECT_EVERY", "2")))
-ANALYTICS_INTERVAL = max(0.08, float(os.getenv("ANALYTICS_INTERVAL", "0.25")))
-RECOGNITION_PROFILE = os.getenv("RECOGNITION_PROFILE", "accurate").strip().lower()
-_requested_confidence = os.getenv("DETECTION_CONFIDENCE", "").strip()
-if RECOGNITION_PROFILE == "accurate" and _requested_confidence in ("", "0.30"):
-    DETECTION_CONFIDENCE = 0.20
-else:
-    DETECTION_CONFIDENCE = float(_requested_confidence or "0.25")
-DETECTION_IMGSZ = max(640, int(os.getenv("DETECTION_IMGSZ", "960")))
-TRACKER_CONFIG = os.getenv("TRACKER_CONFIG", "bytetrack.yaml").strip() or "bytetrack.yaml"
-COUNT_LINE_Y = float(os.getenv("COUNT_LINE_Y", "0.60"))
-COUNT_HYSTERESIS = float(os.getenv("COUNT_HYSTERESIS", "0.06"))
+# ---------------------------------------------------------------------------
+# Scalable analytics settings
+# ---------------------------------------------------------------------------
+MAX_CAMERAS = max(4, min(32, int(os.getenv("MAX_CAMERAS", "32"))))
+ANALYTICS_FPS = max(0.5, float(os.getenv("ANALYTICS_FPS", "3")))
+ANALYTICS_INTERVAL = 1.0 / ANALYTICS_FPS
+ANALYTICS_BATCH_SIZE = max(1, int(os.getenv("ANALYTICS_BATCH_SIZE", "8")))
+DETECTION_CONFIDENCE = float(os.getenv("DETECTION_CONFIDENCE", "0.22"))
+DETECTION_IMGSZ = max(416, int(os.getenv("DETECTION_IMGSZ", "640")))
+DETECTION_IOU = float(os.getenv("DETECTION_IOU", "0.55"))
+MAX_DETECTIONS = max(20, int(os.getenv("MAX_DETECTIONS", "120")))
+INFERENCE_DEVICE = os.getenv("INFERENCE_DEVICE", "auto").strip()
 PASS_MOVEMENT_RATIO = float(os.getenv("PASS_MOVEMENT_RATIO", "0.035"))
 PASS_MIN_TRACK_SECONDS = float(os.getenv("PASS_MIN_TRACK_SECONDS", "0.35"))
+TRACK_TTL_SECONDS = float(os.getenv("TRACK_TTL_SECONDS", "2.0"))
+TRACK_IOU_THRESHOLD = float(os.getenv("TRACK_IOU_THRESHOLD", "0.20"))
+TRACK_CENTER_RATIO = float(os.getenv("TRACK_CENTER_RATIO", "0.12"))
 STOPPED_SECONDS = int(os.getenv("STOPPED_SECONDS", "240"))
 ENABLE_PLATE_OCR = os.getenv("ENABLE_PLATE_OCR", "false").lower() == "true"
-
-_requested_model = os.getenv("YOLO_MODEL", "").strip()
-if RECOGNITION_PROFILE == "fast":
-    YOLO_MODEL = _requested_model or "yolo26n.pt"
-elif RECOGNITION_PROFILE == "balanced":
-    YOLO_MODEL = _requested_model if _requested_model not in ("", "yolo11n.pt") else "yolo26n.pt"
-else:
-    # Accurate profile intentionally upgrades old installations that still
-    # contain the original yolo11n.pt default in .env.
-    YOLO_MODEL = _requested_model if _requested_model not in ("", "yolo11n.pt") else "yolo26s.pt"
+PLATE_OCR_INTERVAL = max(1.0, float(os.getenv("PLATE_OCR_INTERVAL", "2.0")))
+JPEG_QUALITY = min(92, max(50, int(os.getenv("JPEG_QUALITY", "76"))))
+YOLO_MODEL = os.getenv("YOLO_MODEL", "yolo26s.pt").strip() or "yolo26s.pt"
 DB_PATH = os.getenv("DATABASE_PATH", str(Path(__file__).resolve().parent / "cctv.db"))
 
-CAMERAS = [
-    {
-        "id": 1,
-        "name": os.getenv("CAMERA1_NAME", "Camera 1"),
-        "url": os.getenv("CAMERA1_RTSP_URL", os.getenv("CAMERA_RTSP_URL", "")),
-    },
-    {
-        "id": 2,
-        "name": os.getenv("CAMERA2_NAME", "Camera 2"),
-        "url": os.getenv("CAMERA2_RTSP_URL", ""),
-    },
-    {
-        "id": 3,
-        "name": os.getenv("CAMERA3_NAME", "Camera 3"),
-        "url": os.getenv("CAMERA3_RTSP_URL", ""),
-    },
-    {
-        "id": 4,
-        "name": os.getenv("CAMERA4_NAME", "Camera 4"),
-        "url": os.getenv("CAMERA4_RTSP_URL", ""),
-    },
-]
+ALLOWED_CLASSES = {
+    0: "person",
+    2: "car",
+    3: "motorcycle",
+    5: "bus",
+    7: "truck",
+}
+VEHICLE_CLASSES = {"car", "motorcycle", "bus", "truck"}
 
+
+def load_camera_config():
+    cameras = []
+    for camera_id in range(1, MAX_CAMERAS + 1):
+        legacy = os.getenv("CAMERA_RTSP_URL", "") if camera_id == 1 else ""
+        url = os.getenv(f"CAMERA{camera_id}_RTSP_URL", legacy).strip()
+        name = os.getenv(f"CAMERA{camera_id}_NAME", f"Camera {camera_id}").strip() or f"Camera {camera_id}"
+        if camera_id <= 4 or url:
+            cameras.append({"id": camera_id, "name": name, "url": url})
+    return cameras
+
+
+CAMERAS = load_camera_config()
 app = FastAPI(title="AutoGearUp CCTV Gateway")
 
 
+# ---------------------------------------------------------------------------
+# Database: metadata/events only. No video is stored by AutoGearUp.
+# ---------------------------------------------------------------------------
 def db():
     con = sqlite3.connect(DB_PATH, timeout=30)
     con.row_factory = sqlite3.Row
@@ -76,62 +79,192 @@ def init_db():
     with db() as con:
         con.executescript("""
         CREATE TABLE IF NOT EXISTS events (
-          id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL, camera INTEGER NOT NULL,
-          kind TEXT NOT NULL, vehicle_type TEXT, track_id INTEGER, direction TEXT, confidence REAL
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          ts TEXT NOT NULL,
+          camera INTEGER NOT NULL,
+          kind TEXT NOT NULL,
+          vehicle_type TEXT,
+          track_id INTEGER,
+          direction TEXT,
+          confidence REAL
         );
         CREATE INDEX IF NOT EXISTS idx_events_ts ON events(ts);
         CREATE INDEX IF NOT EXISTS idx_events_camera ON events(camera);
 
         CREATE TABLE IF NOT EXISTS plates (
-          id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL, camera INTEGER NOT NULL,
-          plate TEXT NOT NULL, confidence REAL, vehicle_type TEXT, track_id INTEGER
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          ts TEXT NOT NULL,
+          camera INTEGER NOT NULL,
+          plate TEXT NOT NULL,
+          confidence REAL,
+          vehicle_type TEXT,
+          track_id INTEGER
         );
         CREATE INDEX IF NOT EXISTS idx_plates_ts ON plates(ts);
         CREATE INDEX IF NOT EXISTS idx_plates_camera ON plates(camera);
 
         CREATE TABLE IF NOT EXISTS incidents (
-          id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL, camera INTEGER NOT NULL,
-          type TEXT NOT NULL, severity TEXT, description TEXT, track_id INTEGER
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          ts TEXT NOT NULL,
+          camera INTEGER NOT NULL,
+          type TEXT NOT NULL,
+          severity TEXT,
+          description TEXT,
+          track_id INTEGER
         );
         CREATE INDEX IF NOT EXISTS idx_incidents_ts ON incidents(ts);
         CREATE INDEX IF NOT EXISTS idx_incidents_camera ON incidents(camera);
         """)
 
 
-def save_event(e):
+def save_event(event):
     with db() as con:
         con.execute(
             "INSERT INTO events(ts,camera,kind,vehicle_type,track_id,direction,confidence) VALUES(?,?,?,?,?,?,?)",
             (
-                e["time"], e["camera"],
-                "person" if e["type"] == "person" else "vehicle",
-                e["type"], e.get("track_id"), e.get("direction"), e.get("confidence")
-            )
+                event["time"],
+                event["camera"],
+                "person" if event["type"] == "person" else "vehicle",
+                event["type"],
+                event.get("track_id"),
+                event.get("direction"),
+                event.get("confidence"),
+            ),
         )
 
 
-def save_plate(p):
+def save_plate(plate):
     with db() as con:
         con.execute(
             "INSERT INTO plates(ts,camera,plate,confidence,vehicle_type,track_id) VALUES(?,?,?,?,?,?)",
             (
-                p["time"], p["camera"], p["plate"], p.get("confidence"),
-                p.get("vehicle_type"), p.get("track_id")
-            )
+                plate["time"],
+                plate["camera"],
+                plate["plate"],
+                plate.get("confidence"),
+                plate.get("vehicle_type"),
+                plate.get("track_id"),
+            ),
         )
 
 
-def save_incident(i):
+def save_incident(incident):
     with db() as con:
         con.execute(
             "INSERT INTO incidents(ts,camera,type,severity,description,track_id) VALUES(?,?,?,?,?,?)",
             (
-                i["time"], i["camera"], i["type"], i.get("severity"),
-                i.get("description"), i.get("track_id")
-            )
+                incident["time"],
+                incident["camera"],
+                incident["type"],
+                incident.get("severity"),
+                incident.get("description"),
+                incident.get("track_id"),
+            ),
         )
 
 
+# ---------------------------------------------------------------------------
+# Lightweight per-camera tracker.
+# The detector is shared/batched; only tracking state is per camera.
+# ---------------------------------------------------------------------------
+def bbox_iou(a, b):
+    ax1, ay1, ax2, ay2 = a
+    bx1, by1, bx2, by2 = b
+    ix1, iy1 = max(ax1, bx1), max(ay1, by1)
+    ix2, iy2 = min(ax2, bx2), min(ay2, by2)
+    iw, ih = max(0, ix2 - ix1), max(0, iy2 - iy1)
+    inter = iw * ih
+    area_a = max(1, (ax2 - ax1) * (ay2 - ay1))
+    area_b = max(1, (bx2 - bx1) * (by2 - by1))
+    return inter / max(1, area_a + area_b - inter)
+
+
+class LightweightTracker:
+    def __init__(self):
+        self.next_id = 1
+        self.tracks = {}
+
+    def update(self, detections, frame_shape):
+        now = time.time()
+        h, w = frame_shape[:2]
+        diag = max(1.0, math.hypot(w, h))
+
+        # Remove stale tracks before matching.
+        stale = [
+            tid for tid, track in self.tracks.items()
+            if now - track["last_seen"] > TRACK_TTL_SECONDS
+        ]
+        for tid in stale:
+            self.tracks.pop(tid, None)
+
+        unmatched_tracks = set(self.tracks.keys())
+        enriched = []
+
+        # Match high-confidence detections first.
+        detections = sorted(detections, key=lambda d: d["confidence"], reverse=True)
+
+        for det in detections:
+            box = det["box"]
+            cx = (box[0] + box[2]) / 2.0
+            cy = (box[1] + box[3]) / 2.0
+            best_tid = None
+            best_score = -1.0
+
+            for tid in list(unmatched_tracks):
+                track = self.tracks[tid]
+                if track["type"] != det["type"]:
+                    continue
+
+                iou = bbox_iou(box, track["box"])
+                tx, ty = track["center"]
+                center_distance = math.hypot(cx - tx, cy - ty) / diag
+
+                # IoU is preferred; center proximity helps fast-moving objects.
+                if iou >= TRACK_IOU_THRESHOLD:
+                    score = 1.0 + iou
+                elif center_distance <= TRACK_CENTER_RATIO:
+                    score = 1.0 - center_distance
+                else:
+                    continue
+
+                if score > best_score:
+                    best_score = score
+                    best_tid = tid
+
+            if best_tid is None:
+                best_tid = self.next_id
+                self.next_id += 1
+                self.tracks[best_tid] = {
+                    "id": best_tid,
+                    "type": det["type"],
+                    "box": box,
+                    "center": (cx, cy),
+                    "first_center": (cx, cy),
+                    "first_seen": now,
+                    "last_seen": now,
+                    "last_center": (cx, cy),
+                    "counted": False,
+                    "still_since": now,
+                    "incident_latched": False,
+                    "last_plate_ocr": 0.0,
+                }
+            else:
+                unmatched_tracks.discard(best_tid)
+                track = self.tracks[best_tid]
+                track["box"] = box
+                track["last_seen"] = now
+                track["center"] = (cx, cy)
+
+            det = dict(det)
+            det["track_id"] = best_tid
+            enriched.append(det)
+
+        return enriched, self.tracks
+
+
+# ---------------------------------------------------------------------------
+# Camera capture workers: capture only. They do not load AI models.
+# ---------------------------------------------------------------------------
 class CameraWorker:
     def __init__(self, camera_id, name, rtsp_url):
         self.camera_id = camera_id
@@ -139,105 +272,48 @@ class CameraWorker:
         self.rtsp_url = rtsp_url
         self.frame = None
         self.frame_lock = threading.Lock()
+        self.frame_version = 0
         self.running = False
-        self.analytics_running = False
         self.connected = False
         self.status = "not configured" if not rtsp_url else "starting"
-        self.model = None
-        self.model_name = YOLO_MODEL
-        self.ocr = None
-        self.frame_no = 0
-        self.prev_side = {}
-        self.first_pos = {}
-        self.first_seen = {}
-        self.counted_tracks = set()
-        self.seen_vehicle_tracks = set()
-        self.seen_person_tracks = set()
-        self.last_seen = {}
+
+        self.tracker = LightweightTracker()
         self.last_detections = []
         self.current_people = 0
         self.current_vehicles = 0
         self.last_inference_at = None
-        self.last_pos = {}
-        self.still_since = {}
-        self.incident_latched = set()
+        self.analytics_running = False
+        self.model_name = None
+
         self.people_passed = 0
         self.vehicles_passed = 0
-        self.readable_plates = 0
+        self.people_seen = 0
+        self.vehicles_seen = 0
+        self.seen_track_ids = set()
+        self.counted_track_ids = set()
         self.vehicle_types = defaultdict(int)
-        self.plates = deque(maxlen=100)
-        self.incidents = deque(maxlen=100)
-        self.events = deque(maxlen=200)
 
-    def load_models(self):
-        if not self.rtsp_url:
-            return
-
-        try:
-            from ultralytics import YOLO
-
-            candidates = []
-            for name in (YOLO_MODEL, "yolo26n.pt", "yolo11s.pt", "yolo11n.pt"):
-                if name and name not in candidates:
-                    candidates.append(name)
-
-            for candidate in candidates:
-                try:
-                    self.model = YOLO(candidate)
-                    self.model_name = candidate
-                    print(
-                        f"[Camera {self.camera_id}] AI loaded: {candidate} "
-                        f"imgsz={DETECTION_IMGSZ} conf={DETECTION_CONFIDENCE}"
-                    )
-                    break
-                except Exception as model_error:
-                    print(
-                        f"[Camera {self.camera_id}] Could not load {candidate}: "
-                        f"{model_error}"
-                    )
-
-            if self.model is None:
-                print(
-                    f"[Camera {self.camera_id}] YOLO unavailable; "
-                    "live video will still work"
-                )
-        except Exception as e:
-            print(
-                f"[Camera {self.camera_id}] Ultralytics unavailable; "
-                f"live video will still work: {e}"
-            )
-
-        if ENABLE_PLATE_OCR:
-            try:
-                import easyocr
-                self.ocr = easyocr.Reader(["en"], gpu=False)
-                print(f"[Camera {self.camera_id}] EasyOCR loaded")
-            except Exception as e:
-                print(f"[Camera {self.camera_id}] Plate OCR disabled: {e}")
+        self.events = deque(maxlen=250)
+        self.plates = deque(maxlen=150)
+        self.incidents = deque(maxlen=150)
+        self.readable_plates = 0
 
     def start(self):
         if self.running or not self.rtsp_url:
             return
         self.running = True
         threading.Thread(
-            target=self.run,
+            target=self.capture_loop,
             daemon=True,
             name=f"camera-capture-{self.camera_id}",
-        ).start()
-        threading.Thread(
-            target=self.analytics_loop,
-            daemon=True,
-            name=f"camera-ai-{self.camera_id}",
         ).start()
 
     def open_capture(self):
         cap = cv2.VideoCapture(self.rtsp_url, cv2.CAP_FFMPEG)
-        cap.set(cv2.CAP_PROP_BUFFERSIZE, 2)
+        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         return cap
 
-    def run(self):
-        # Capture is intentionally independent from AI. A slow model must never
-        # stop the operator from seeing the live camera.
+    def capture_loop(self):
         while self.running:
             self.status = "connecting"
             cap = self.open_capture()
@@ -245,13 +321,13 @@ class CameraWorker:
             if not cap.isOpened():
                 self.connected = False
                 self.status = "retrying"
-                print(f"[Camera {self.camera_id}] Unable to open RTSP stream; retrying...")
+                print(f"[Camera {self.camera_id}] unable to open RTSP; retrying")
                 time.sleep(3)
                 continue
 
             self.connected = True
             self.status = "online"
-            print(f"[Camera {self.camera_id}] Stream connected")
+            print(f"[Camera {self.camera_id}] stream connected")
 
             while self.running:
                 ok, frame = cap.read()
@@ -260,53 +336,112 @@ class CameraWorker:
                     self.status = "reconnecting"
                     break
 
-                self.frame_no += 1
                 with self.frame_lock:
                     self.frame = frame
+                    self.frame_version += 1
 
             cap.release()
             time.sleep(1)
 
-    def analytics_loop(self):
-        self.analytics_running = True
-        try:
-            self.load_models()
-            if self.model is None:
-                return
+    def snapshot(self):
+        with self.frame_lock:
+            if self.frame is None:
+                return None, self.frame_version
+            return self.frame.copy(), self.frame_version
 
-            while self.running:
-                with self.frame_lock:
-                    sample = None if self.frame is None else self.frame.copy()
-
-                if sample is None:
-                    time.sleep(0.10)
-                    continue
-
-                # Analyze a snapshot. The capture thread continues receiving
-                # frames while inference/tracking happens here.
-                self.analyze(sample)
-                time.sleep(ANALYTICS_INTERVAL)
-        finally:
-            self.analytics_running = False
-
-    def draw_last_detections(self, frame):
+    def consume_detections(self, detections, frame):
+        now = time.time()
         h, w = frame.shape[:2]
-        line_y = int(h * COUNT_LINE_Y)
-        band = max(8, int(h * COUNT_HYSTERESIS))
-        upper = max(0, line_y - band)
-        lower = min(h - 1, line_y + band)
+        diag = max(1.0, math.hypot(w, h))
+        tracked, tracks = self.tracker.update(detections, frame.shape)
 
-        cv2.line(frame, (0, upper), (w, upper), (60, 120, 180), 1)
-        cv2.line(frame, (0, line_y), (w, line_y), (80, 220, 170), 2)
-        cv2.line(frame, (0, lower), (w, lower), (60, 120, 180), 1)
+        self.current_people = sum(1 for d in tracked if d["type"] == "person")
+        self.current_vehicles = sum(1 for d in tracked if d["type"] in VEHICLE_CLASSES)
+        self.last_detections = tracked
+        self.last_inference_at = time.strftime("%Y-%m-%d %H:%M:%S")
 
-        for d in self.last_detections:
-            x1, y1, x2, y2 = d["box"]
-            colour = d["colour"]
+        for det in tracked:
+            tid = det["track_id"]
+            object_type = det["type"]
+            track = tracks[tid]
+
+            if tid not in self.seen_track_ids:
+                self.seen_track_ids.add(tid)
+                if object_type == "person":
+                    self.people_seen += 1
+                elif object_type in VEHICLE_CLASSES:
+                    self.vehicles_seen += 1
+
+            fx, fy = track["first_center"]
+            cx, cy = track["center"]
+            movement = math.hypot(cx - fx, cy - fy)
+            movement_threshold = max(16.0, diag * PASS_MOVEMENT_RATIO)
+            age = now - track["first_seen"]
+
+            if (
+                tid not in self.counted_track_ids
+                and age >= PASS_MIN_TRACK_SECONDS
+                and movement >= movement_threshold
+            ):
+                self.counted_track_ids.add(tid)
+                track["counted"] = True
+
+                if object_type == "person":
+                    self.people_passed += 1
+                else:
+                    self.vehicles_passed += 1
+                    self.vehicle_types[object_type] += 1
+
+                if abs(cy - fy) >= abs(cx - fx):
+                    direction = "inbound" if cy > fy else "outbound"
+                else:
+                    direction = "right" if cx > fx else "left"
+
+                event = {
+                    "time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "camera": self.camera_id,
+                    "type": object_type,
+                    "track_id": tid,
+                    "direction": direction,
+                    "confidence": round(float(det["confidence"]), 3),
+                }
+                self.events.appendleft(event)
+                save_event(event)
+
+            # Stopped vehicle incident logic.
+            if object_type in VEHICLE_CLASSES:
+                lx, ly = track["last_center"]
+                local_move = math.hypot(cx - lx, cy - ly)
+
+                if local_move < max(4.0, diag * 0.002):
+                    if now - track["still_since"] >= STOPPED_SECONDS and not track["incident_latched"]:
+                        track["incident_latched"] = True
+                        incident = {
+                            "time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                            "camera": self.camera_id,
+                            "type": "stopped_vehicle",
+                            "severity": "medium",
+                            "description": f"{object_type.title()} stationary for {STOPPED_SECONDS}s",
+                            "track_id": tid,
+                        }
+                        self.incidents.appendleft(incident)
+                        save_incident(incident)
+                else:
+                    track["still_since"] = now
+
+                track["last_center"] = (cx, cy)
+
+    def draw_overlay(self, frame):
+        h, _ = frame.shape[:2]
+        for det in self.last_detections:
+            x1, y1, x2, y2 = map(int, det["box"])
+            is_vehicle = det["type"] in VEHICLE_CLASSES
+            colour = (255, 170, 80) if is_vehicle else (80, 220, 170)
+            label = f'{det["type"]} {det["confidence"]:.0%} ID:{det["track_id"]}'
             cv2.rectangle(frame, (x1, y1), (x2, y2), colour, 2)
             cv2.putText(
                 frame,
-                d["label"],
+                label,
                 (x1, max(18, y1 - 7)),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 .45,
@@ -327,7 +462,7 @@ class CameraWorker:
         )
         cv2.putText(
             frame,
-            f"Vehicles passed: {self.vehicles_passed} / {len(self.seen_vehicle_tracks)} seen",
+            f"Vehicles passed: {self.vehicles_passed} / {self.vehicles_seen} seen",
             (12, max(24, h - 12)),
             cv2.FONT_HERSHEY_SIMPLEX,
             .55,
@@ -337,247 +472,198 @@ class CameraWorker:
         )
         return frame
 
-    def analyze(self, frame):
-        h, w = frame.shape[:2]
-        line_y = int(h * COUNT_LINE_Y)
-        band = max(8, int(h * COUNT_HYSTERESIS))
-        upper = max(0, line_y - band)
-        lower = min(h - 1, line_y + band)
 
-        allowed = {
-            0: "person",
-            2: "car",
-            3: "motorcycle",
-            5: "bus",
-            7: "truck",
-        }
+# ---------------------------------------------------------------------------
+# Shared batched AI engine.
+# One model services every camera; frames are grouped into batches.
+# ---------------------------------------------------------------------------
+class BatchAnalyticsEngine:
+    def __init__(self, workers):
+        self.workers = workers
+        self.model = None
+        self.model_name = YOLO_MODEL
+        self.running = False
+        self.status = "starting"
+        self.last_error = None
+        self.last_batch_ms = None
+        self.last_batch_size = 0
+        self.total_batches = 0
+        self.total_frames = 0
+        self.last_versions = defaultdict(int)
+        self.ocr = None
+        self.ocr_lock = threading.Lock()
 
-        self.current_people = 0
-        self.current_vehicles = 0
-        fresh_detections = []
-
+    def choose_device(self):
+        if INFERENCE_DEVICE != "auto":
+            return INFERENCE_DEVICE
         try:
-            results = self.model.track(
-                frame,
-                persist=True,
-                verbose=False,
-                classes=list(allowed.keys()),
-                tracker=TRACKER_CONFIG,
-                conf=DETECTION_CONFIDENCE,
-                iou=0.55,
-                imgsz=DETECTION_IMGSZ,
-                max_det=120,
-            )
-
-            if not results:
-                self.last_detections = []
-                return self.draw_last_detections(frame)
-
-            boxes = results[0].boxes
-            if boxes is None:
-                self.last_detections = []
-                return self.draw_last_detections(frame)
-
-            xyxy = boxes.xyxy.cpu().numpy()
-            classes = boxes.cls.int().cpu().tolist()
-            confs = boxes.conf.cpu().numpy().tolist()
-            ids = boxes.id.int().cpu().tolist() if boxes.id is not None else [None] * len(classes)
-
-            for bb, cls_id, confidence, track_id in zip(xyxy, classes, confs, ids):
-                if cls_id not in allowed:
-                    continue
-
-                x1, y1, x2, y2 = map(int, bb)
-                object_type = allowed[cls_id]
-                cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
-                is_vehicle = object_type != "person"
-
-                if is_vehicle:
-                    self.current_vehicles += 1
-                else:
-                    self.current_people += 1
-
-                colour = (255, 170, 80) if is_vehicle else (80, 220, 170)
-                label = f"{object_type} {confidence:.0%}"
-                if track_id is not None:
-                    label += f" ID:{track_id}"
-
-                fresh_detections.append({
-                    "box": (x1, y1, x2, y2),
-                    "colour": colour,
-                    "label": label,
-                })
-
-                if track_id is None:
-                    continue
-
-                if is_vehicle:
-                    self.seen_vehicle_tracks.add(track_id)
-                else:
-                    self.seen_person_tracks.add(track_id)
-
-                # "Passed" now means a unique tracked person/vehicle moved
-                # meaningfully within this camera. No line crossing is required.
-                # Each track contributes at most one count per camera.
-                now = time.time()
-                self.last_seen[track_id] = now
-                self.first_pos.setdefault(track_id, (cx, cy))
-                self.first_seen.setdefault(track_id, now)
-
-                fx, fy = self.first_pos[track_id]
-                movement = ((cx - fx) ** 2 + (cy - fy) ** 2) ** 0.5
-                movement_threshold = max(18.0, ((w * w + h * h) ** 0.5) * PASS_MOVEMENT_RATIO)
-                age = now - self.first_seen[track_id]
-
-                if (
-                    track_id not in self.counted_tracks
-                    and age >= PASS_MIN_TRACK_SECONDS
-                    and movement >= movement_threshold
-                ):
-                    self.counted_tracks.add(track_id)
-
-                    if object_type == "person":
-                        self.people_passed += 1
-                    else:
-                        self.vehicles_passed += 1
-                        self.vehicle_types[object_type] += 1
-
-                    direction = "moving"
-                    if abs(cy - fy) >= abs(cx - fx):
-                        direction = "inbound" if cy > fy else "outbound"
-                    else:
-                        direction = "right" if cx > fx else "left"
-
-                    event = {
-                        "time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "camera": self.camera_id,
-                        "type": object_type,
-                        "track_id": track_id,
-                        "direction": direction,
-                        "confidence": round(float(confidence), 3),
-                    }
-                    self.events.appendleft(event)
-                    save_event(event)
-
-                # Keep the previous side only for the visual counting guide.
-                if cy < upper:
-                    self.prev_side[track_id] = -1
-                elif cy > lower:
-                    self.prev_side[track_id] = 1
-
-                if is_vehicle:
-                    previous_position = self.last_pos.get(track_id)
-                    now = time.time()
-
-                    if previous_position:
-                        distance = (
-                            (cx - previous_position[0]) ** 2
-                            + (cy - previous_position[1]) ** 2
-                        ) ** 0.5
-
-                        if distance < 10:
-                            self.still_since.setdefault(track_id, now)
-
-                            if (
-                                now - self.still_since[track_id] >= STOPPED_SECONDS
-                                and track_id not in self.incident_latched
-                            ):
-                                self.incident_latched.add(track_id)
-                                incident = {
-                                    "time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                                    "camera": self.camera_id,
-                                    "type": "stopped_vehicle",
-                                    "severity": "medium",
-                                    "description": f"{object_type.title()} stationary for {STOPPED_SECONDS}s",
-                                    "track_id": track_id,
-                                }
-                                self.incidents.appendleft(incident)
-                                save_incident(incident)
-                        else:
-                            self.still_since.pop(track_id, None)
-
-                    self.last_pos[track_id] = (cx, cy)
-
-                    if (
-                        self.ocr
-                        and confidence > 0.65
-                        and (self.frame_no // DETECT_EVERY) % 8 == 0
-                    ):
-                        self.try_plate_ocr(
-                            frame, x1, y1, x2, y2, object_type, track_id
-                        )
-
-            # Drop stale tracker bookkeeping after 2 minutes.
-            now = time.time()
-            stale = [tid for tid, ts in self.last_seen.items() if now - ts > 120]
-            for tid in stale:
-                self.last_seen.pop(tid, None)
-                self.first_pos.pop(tid, None)
-                self.first_seen.pop(tid, None)
-                self.prev_side.pop(tid, None)
-                self.last_pos.pop(tid, None)
-                self.still_since.pop(tid, None)
-                self.incident_latched.discard(tid)
-                self.counted_tracks.discard(tid)
-
-            self.last_detections = fresh_detections
-            self.last_inference_at = time.strftime("%Y-%m-%d %H:%M:%S")
-
-        except Exception as e:
-            cv2.putText(
-                frame,
-                f"Analytics error: {type(e).__name__}",
-                (15, 35),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                .6,
-                (0, 0, 255),
-                2,
-            )
-
-        return self.draw_last_detections(frame)
-
-    def try_plate_ocr(self, frame, x1, y1, x2, y2, vehicle_type, track_id):
-        vh = max(1, y2 - y1)
-        crop = frame[y1 + vh // 2:y2, x1:x2]
-
-        if crop.size == 0:
-            return
-
-        try:
-            detections = self.ocr.readtext(crop, detail=1, paragraph=False)
-
-            for _, text, score in detections:
-                clean = re.sub(r"[^A-Z0-9]", "", text.upper())
-
-                if 4 <= len(clean) <= 8 and score >= 0.50:
-                    duplicate = any(
-                        p.get("plate") == clean and p.get("track_id") == track_id
-                        for p in list(self.plates)[:10]
-                    )
-
-                    if not duplicate:
-                        self.readable_plates += 1
-                        plate_event = {
-                            "time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                            "camera": self.camera_id,
-                            "plate": clean,
-                            "confidence": round(float(score), 3),
-                            "vehicle_type": vehicle_type,
-                            "track_id": track_id,
-                        }
-                        self.plates.appendleft(plate_event)
-                        save_plate(plate_event)
-
-                    break
-
+            import torch
+            if torch.cuda.is_available():
+                return "0"
         except Exception:
             pass
+        return "cpu"
+
+    def load_model(self):
+        try:
+            from ultralytics import YOLO
+            candidates = []
+            for candidate in (
+                YOLO_MODEL,
+                "yolo26s.pt",
+                "yolo26n.pt",
+                "yolo11s.pt",
+                "yolo11n.pt",
+            ):
+                if candidate and candidate not in candidates:
+                    candidates.append(candidate)
+
+            for candidate in candidates:
+                try:
+                    self.model = YOLO(candidate)
+                    self.model_name = candidate
+                    self.status = "ready"
+                    print(
+                        f"[Analytics] shared model loaded: {candidate}; "
+                        f"device={self.choose_device()} batch={ANALYTICS_BATCH_SIZE} "
+                        f"imgsz={DETECTION_IMGSZ} target_fps/camera={ANALYTICS_FPS}"
+                    )
+                    break
+                except Exception as e:
+                    print(f"[Analytics] could not load {candidate}: {e}")
+
+            if self.model is None:
+                self.status = "model unavailable"
+                return
+
+            if ENABLE_PLATE_OCR:
+                try:
+                    import easyocr
+                    self.ocr = easyocr.Reader(["en"], gpu=False)
+                    print("[Analytics] shared EasyOCR reader loaded")
+                except Exception as e:
+                    print(f"[Analytics] plate OCR disabled: {e}")
+        except Exception as e:
+            self.status = "ultralytics unavailable"
+            self.last_error = str(e)
+            print(f"[Analytics] unavailable: {e}")
+
+    def start(self):
+        if self.running:
+            return
+        self.running = True
+        threading.Thread(
+            target=self.run,
+            daemon=True,
+            name="shared-batch-analytics",
+        ).start()
+
+    def run(self):
+        self.load_model()
+        if self.model is None:
+            return
+
+        while self.running:
+            cycle_start = time.time()
+            samples = []
+
+            for worker in self.workers.values():
+                if not worker.rtsp_url or not worker.connected:
+                    continue
+                frame, version = worker.snapshot()
+                if frame is None:
+                    continue
+                if version == self.last_versions[worker.camera_id]:
+                    continue
+                self.last_versions[worker.camera_id] = version
+                samples.append((worker, frame))
+
+            # Keep latency low: process the freshest frame from each camera,
+            # chunked to the configured batch size.
+            for offset in range(0, len(samples), ANALYTICS_BATCH_SIZE):
+                chunk = samples[offset:offset + ANALYTICS_BATCH_SIZE]
+                if not chunk:
+                    continue
+
+                workers_chunk = [x[0] for x in chunk]
+                frames = [x[1] for x in chunk]
+
+                started = time.perf_counter()
+                try:
+                    results = self.model.predict(
+                        source=frames,
+                        verbose=False,
+                        classes=list(ALLOWED_CLASSES.keys()),
+                        conf=DETECTION_CONFIDENCE,
+                        iou=DETECTION_IOU,
+                        imgsz=DETECTION_IMGSZ,
+                        max_det=MAX_DETECTIONS,
+                        device=self.choose_device(),
+                    )
+                    elapsed_ms = (time.perf_counter() - started) * 1000.0
+                    self.last_batch_ms = round(elapsed_ms, 1)
+                    self.last_batch_size = len(frames)
+                    self.total_batches += 1
+                    self.total_frames += len(frames)
+                    self.status = "running"
+
+                    for worker, frame, result in zip(workers_chunk, frames, results):
+                        detections = []
+                        boxes = result.boxes
+
+                        if boxes is not None:
+                            xyxy = boxes.xyxy.cpu().numpy()
+                            classes = boxes.cls.int().cpu().tolist()
+                            confs = boxes.conf.cpu().numpy().tolist()
+
+                            for bb, cls_id, confidence in zip(xyxy, classes, confs):
+                                if cls_id not in ALLOWED_CLASSES:
+                                    continue
+                                detections.append({
+                                    "box": tuple(map(float, bb)),
+                                    "type": ALLOWED_CLASSES[cls_id],
+                                    "confidence": float(confidence),
+                                })
+
+                        worker.analytics_running = True
+                        worker.model_name = self.model_name
+                        worker.consume_detections(detections, frame)
+
+                except Exception as e:
+                    self.last_error = str(e)
+                    self.status = "error"
+                    print(f"[Analytics] batch error: {e}")
+
+            elapsed = time.time() - cycle_start
+            time.sleep(max(0.01, ANALYTICS_INTERVAL - elapsed))
+
+    def health(self):
+        effective_fps = 0.0
+        if self.last_batch_ms and self.last_batch_ms > 0:
+            effective_fps = round((1000.0 / self.last_batch_ms) * max(1, self.last_batch_size), 1)
+        return {
+            "mode": "shared_batch",
+            "status": self.status,
+            "model": self.model_name if self.model is not None else None,
+            "device": self.choose_device(),
+            "batch_size": ANALYTICS_BATCH_SIZE,
+            "target_fps_per_camera": ANALYTICS_FPS,
+            "imgsz": DETECTION_IMGSZ,
+            "confidence": DETECTION_CONFIDENCE,
+            "last_batch_ms": self.last_batch_ms,
+            "last_batch_size": self.last_batch_size,
+            "estimated_inference_fps": effective_fps,
+            "total_batches": self.total_batches,
+            "total_frames": self.total_frames,
+            "last_error": self.last_error,
+        }
 
 
 workers = {
     camera["id"]: CameraWorker(camera["id"], camera["name"], camera["url"])
     for camera in CAMERAS
 }
+analytics = BatchAnalyticsEngine(workers)
 
 
 @app.on_event("startup")
@@ -585,18 +671,24 @@ def startup():
     init_db()
     for worker in workers.values():
         worker.start()
+    analytics.start()
 
 
+# ---------------------------------------------------------------------------
+# API
+# ---------------------------------------------------------------------------
 @app.get("/api/health")
 def health():
     configured = [w for w in workers.values() if w.rtsp_url]
+    online = [w for w in configured if w.connected]
     return {
         "ok": True,
         "camera_configured": bool(configured),
         "camera_count": len(configured),
-        "online_count": sum(1 for w in configured if w.connected),
-        "analytics_enabled": any(w.model is not None for w in configured),
-        "plate_ocr_enabled": any(w.ocr is not None for w in configured),
+        "online_count": len(online),
+        "analytics_enabled": analytics.model is not None,
+        "plate_ocr_enabled": analytics.ocr is not None,
+        "analytics": analytics.health(),
         "cameras": [
             {
                 "id": w.camera_id,
@@ -605,18 +697,18 @@ def health():
                 "online": w.connected,
                 "status": w.status,
                 "frame_available": w.frame is not None,
-                "analytics_enabled": w.model is not None,
+                "analytics_enabled": analytics.model is not None,
                 "analytics_running": w.analytics_running,
-                "model": w.model_name if w.model is not None else None,
+                "model": w.model_name,
                 "detection_imgsz": DETECTION_IMGSZ,
                 "detection_confidence": DETECTION_CONFIDENCE,
-                "recognition_profile": RECOGNITION_PROFILE,
+                "recognition_profile": "shared-batch",
                 "current_people": w.current_people,
                 "current_vehicles": w.current_vehicles,
                 "vehicles_passed": w.vehicles_passed,
-                "vehicles_seen": len(w.seen_vehicle_tracks),
+                "vehicles_seen": w.vehicles_seen,
                 "people_passed": w.people_passed,
-                "people_seen": len(w.seen_person_tracks),
+                "people_seen": w.people_seen,
                 "last_inference_at": w.last_inference_at,
             }
             for w in workers.values()
@@ -626,17 +718,7 @@ def health():
 
 @app.get("/api/cameras")
 def cameras():
-    return [
-        {
-            "id": w.camera_id,
-            "name": w.name,
-            "configured": bool(w.rtsp_url),
-            "online": w.connected,
-            "status": w.status,
-            "frame_available": w.frame is not None,
-        }
-        for w in workers.values()
-    ]
+    return health()["cameras"]
 
 
 def period_bounds(period, start=None, end=None):
@@ -682,17 +764,14 @@ def history(period: str = "today", start: str | None = None, end: str | None = N
             "SELECT COUNT(*) n FROM events WHERE ts BETWEEN ? AND ? AND kind='person'",
             (a, b),
         ).fetchone()["n"]
-
         vehicles = con.execute(
             "SELECT COUNT(*) n FROM events WHERE ts BETWEEN ? AND ? AND kind='vehicle'",
             (a, b),
         ).fetchone()["n"]
-
         plates_n = con.execute(
             "SELECT COUNT(*) n FROM plates WHERE ts BETWEEN ? AND ?",
             (a, b),
         ).fetchone()["n"]
-
         incidents_n = con.execute(
             "SELECT COUNT(*) n FROM incidents WHERE ts BETWEEN ? AND ?",
             (a, b),
@@ -715,7 +794,6 @@ def history(period: str = "today", start: str | None = None, end: str | None = N
                 (a, b),
             )
         ]
-
         latest_plates = [
             dict(row)
             for row in con.execute(
@@ -724,7 +802,6 @@ def history(period: str = "today", start: str | None = None, end: str | None = N
                 (a, b),
             )
         ]
-
         latest_incidents = [
             dict(row)
             for row in con.execute(
@@ -736,10 +813,8 @@ def history(period: str = "today", start: str | None = None, end: str | None = N
 
     for row in latest_events:
         row["camera_name"] = names.get(row["camera"], f"Camera {row['camera']}")
-
     for row in latest_plates:
         row["camera_name"] = names.get(row["camera"], f"Camera {row['camera']}")
-
     for row in latest_incidents:
         row["camera_name"] = names.get(row["camera"], f"Camera {row['camera']}")
 
@@ -765,30 +840,26 @@ def stats():
 
 def mjpeg(worker):
     while True:
-        with worker.frame_lock:
-            frame = None if worker.frame is None else worker.frame.copy()
+        frame, _ = worker.snapshot()
 
         if frame is None:
-            placeholder = np.zeros((480, 854, 3), dtype=np.uint8)
-            message = f"{worker.name}: {worker.status}"
+            frame = np.zeros((480, 854, 3), dtype=np.uint8)
             cv2.putText(
-                placeholder,
-                message,
+                frame,
+                f"{worker.name}: {worker.status}",
                 (60, 245),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 .8,
                 (220, 220, 220),
                 2,
             )
-            frame = placeholder
-
-        if worker.model is not None:
-            frame = worker.draw_last_detections(frame)
+        else:
+            frame = worker.draw_overlay(frame)
 
         ok, jpg = cv2.imencode(
             ".jpg",
             frame,
-            [int(cv2.IMWRITE_JPEG_QUALITY), 78],
+            [int(cv2.IMWRITE_JPEG_QUALITY), JPEG_QUALITY],
         )
 
         if ok:
@@ -799,22 +870,22 @@ def mjpeg(worker):
                 + b"\r\n"
             )
 
-        time.sleep(0.04)
+        # Streaming is on-demand only. No recording is performed here.
+        time.sleep(0.05)
 
 
 @app.get("/api/cameras/{camera_id}/stream")
 def stream(camera_id: int):
     worker = workers.get(camera_id)
-
     if not worker:
         raise HTTPException(status_code=404, detail="Camera not found")
-
     if not worker.rtsp_url:
         raise HTTPException(status_code=404, detail="Camera is not configured")
 
     return StreamingResponse(
         mjpeg(worker),
         media_type="multipart/x-mixed-replace; boundary=frame",
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate"},
     )
 
 
