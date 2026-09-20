@@ -151,6 +151,8 @@ class CameraWorker:
         self.first_pos = {}
         self.first_seen = {}
         self.counted_tracks = set()
+        self.seen_vehicle_tracks = set()
+        self.seen_person_tracks = set()
         self.last_seen = {}
         self.last_detections = []
         self.current_people = 0
@@ -316,7 +318,17 @@ class CameraWorker:
         cv2.putText(
             frame,
             f"Now: {self.current_people} people | {self.current_vehicles} vehicles",
-            (12, max(24, h - 14)),
+            (12, max(42, h - 34)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            .55,
+            (235, 235, 235),
+            2,
+            cv2.LINE_AA,
+        )
+        cv2.putText(
+            frame,
+            f"Vehicles passed: {self.vehicles_passed} / {len(self.seen_vehicle_tracks)} seen",
+            (12, max(24, h - 12)),
             cv2.FONT_HERSHEY_SIMPLEX,
             .55,
             (235, 235, 235),
@@ -398,6 +410,11 @@ class CameraWorker:
 
                 if track_id is None:
                     continue
+
+                if is_vehicle:
+                    self.seen_vehicle_tracks.add(track_id)
+                else:
+                    self.seen_person_tracks.add(track_id)
 
                 # "Passed" now means a unique tracked person/vehicle moved
                 # meaningfully within this camera. No line crossing is required.
@@ -596,6 +613,10 @@ def health():
                 "recognition_profile": RECOGNITION_PROFILE,
                 "current_people": w.current_people,
                 "current_vehicles": w.current_vehicles,
+                "vehicles_passed": w.vehicles_passed,
+                "vehicles_seen": len(w.seen_vehicle_tracks),
+                "people_passed": w.people_passed,
+                "people_seen": len(w.seen_person_tracks),
                 "last_inference_at": w.last_inference_at,
             }
             for w in workers.values()
