@@ -133,7 +133,7 @@ function renderCameraHealth(cameras){
       img.style.display='none';
       img.removeAttribute('src');
     }
-    cards.push('<div class="type"><span>'+String(cam.name||('CAMERA '+id)).toUpperCase()+'</span><b style="font-size:14px">'+(cam.configured?(cam.online?((cam.current_people||0)+' people · '+(cam.current_vehicles||0)+' vehicles'):cam.status):'Not configured')+'</b></div>');
+    cards.push('<div class="type"><span>'+String(cam.name||('CAMERA '+id)).toUpperCase()+'</span><b style="font-size:14px">'+(cam.configured?(cam.online?((cam.current_people||0)+' people · '+(cam.current_vehicles||0)+' vehicles'+(cam.model?' · '+cam.model:'')):cam.status):'Not configured')+'</b></div>');
   });
   cameraConnections.innerHTML=cards.join('');
 }
