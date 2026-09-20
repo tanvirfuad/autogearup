@@ -12,8 +12,10 @@ from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
 
-DETECT_EVERY = int(os.getenv("DETECT_EVERY", "3"))
+DETECT_EVERY = max(1, int(os.getenv("DETECT_EVERY", "2")))
+DETECTION_CONFIDENCE = float(os.getenv("DETECTION_CONFIDENCE", "0.30"))
 COUNT_LINE_Y = float(os.getenv("COUNT_LINE_Y", "0.60"))
+COUNT_HYSTERESIS = float(os.getenv("COUNT_HYSTERESIS", "0.06"))
 STOPPED_SECONDS = int(os.getenv("STOPPED_SECONDS", "240"))
 ENABLE_PLATE_OCR = os.getenv("ENABLE_PLATE_OCR", "false").lower() == "true"
 YOLO_MODEL = os.getenv("YOLO_MODEL", "yolo11n.pt")
@@ -125,6 +127,10 @@ class CameraWorker:
         self.ocr = None
         self.frame_no = 0
         self.prev_side = {}
+        self.last_detections = []
+        self.current_people = 0
+        self.current_vehicles = 0
+        self.last_inference_at = None
         self.last_pos = {}
         self.still_since = {}
         self.incident_latched = set()
@@ -190,8 +196,11 @@ class CameraWorker:
                     break
 
                 self.frame_no += 1
-                if self.model and self.frame_no % DETECT_EVERY == 0:
-                    frame = self.analyze(frame)
+                if self.model:
+                    if self.frame_no % DETECT_EVERY == 0:
+                        frame = self.analyze(frame)
+                    else:
+                        frame = self.draw_last_detections(frame)
 
                 with self.frame_lock:
                     self.frame = frame
@@ -199,10 +208,50 @@ class CameraWorker:
             cap.release()
             time.sleep(1)
 
+    def draw_last_detections(self, frame):
+        h, w = frame.shape[:2]
+        line_y = int(h * COUNT_LINE_Y)
+        band = max(8, int(h * COUNT_HYSTERESIS))
+        upper = max(0, line_y - band)
+        lower = min(h - 1, line_y + band)
+
+        cv2.line(frame, (0, upper), (w, upper), (60, 120, 180), 1)
+        cv2.line(frame, (0, line_y), (w, line_y), (80, 220, 170), 2)
+        cv2.line(frame, (0, lower), (w, lower), (60, 120, 180), 1)
+
+        for d in self.last_detections:
+            x1, y1, x2, y2 = d["box"]
+            colour = d["colour"]
+            cv2.rectangle(frame, (x1, y1), (x2, y2), colour, 2)
+            cv2.putText(
+                frame,
+                d["label"],
+                (x1, max(18, y1 - 7)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                .45,
+                colour,
+                1,
+                cv2.LINE_AA,
+            )
+
+        cv2.putText(
+            frame,
+            f"Now: {self.current_people} people | {self.current_vehicles} vehicles",
+            (12, max(24, h - 14)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            .55,
+            (235, 235, 235),
+            2,
+            cv2.LINE_AA,
+        )
+        return frame
+
     def analyze(self, frame):
         h, w = frame.shape[:2]
         line_y = int(h * COUNT_LINE_Y)
-        cv2.line(frame, (0, line_y), (w, line_y), (80, 220, 170), 2)
+        band = max(8, int(h * COUNT_HYSTERESIS))
+        upper = max(0, line_y - band)
+        lower = min(h - 1, line_y + band)
 
         allowed = {
             0: "person",
@@ -212,6 +261,10 @@ class CameraWorker:
             7: "truck",
         }
 
+        self.current_people = 0
+        self.current_vehicles = 0
+        fresh_detections = []
+
         try:
             results = self.model.track(
                 frame,
@@ -219,14 +272,18 @@ class CameraWorker:
                 verbose=False,
                 classes=list(allowed.keys()),
                 tracker="bytetrack.yaml",
+                conf=DETECTION_CONFIDENCE,
+                iou=0.50,
             )
 
             if not results:
-                return frame
+                self.last_detections = []
+                return self.draw_last_detections(frame)
 
             boxes = results[0].boxes
             if boxes is None:
-                return frame
+                self.last_detections = []
+                return self.draw_last_detections(frame)
 
             xyxy = boxes.xyxy.cpu().numpy()
             classes = boxes.cls.int().cpu().tolist()
@@ -241,45 +298,58 @@ class CameraWorker:
                 object_type = allowed[cls_id]
                 cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
                 is_vehicle = object_type != "person"
-                colour = (255, 170, 80) if is_vehicle else (80, 220, 170)
 
-                cv2.rectangle(frame, (x1, y1), (x2, y2), colour, 2)
-                cv2.putText(
-                    frame,
-                    f"{object_type} {confidence:.0%}" + (f" ID:{track_id}" if track_id is not None else ""),
-                    (x1, max(18, y1 - 7)),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    .45,
-                    colour,
-                    1,
-                    cv2.LINE_AA,
-                )
+                if is_vehicle:
+                    self.current_vehicles += 1
+                else:
+                    self.current_people += 1
+
+                colour = (255, 170, 80) if is_vehicle else (80, 220, 170)
+                label = f"{object_type} {confidence:.0%}"
+                if track_id is not None:
+                    label += f" ID:{track_id}"
+
+                fresh_detections.append({
+                    "box": (x1, y1, x2, y2),
+                    "colour": colour,
+                    "label": label,
+                })
 
                 if track_id is None:
                     continue
 
-                side = 1 if cy >= line_y else -1
+                # Stable-side counting with a dead-band around the line.
+                # This avoids missed counts from one-frame jumps and avoids
+                # double-counting when an object jitters on the line.
+                if cy < upper:
+                    stable_side = -1
+                elif cy > lower:
+                    stable_side = 1
+                else:
+                    stable_side = 0
+
                 previous_side = self.prev_side.get(track_id)
 
-                if previous_side is not None and previous_side != side:
-                    if object_type == "person":
-                        self.people_passed += 1
-                    else:
-                        self.vehicles_passed += 1
-                        self.vehicle_types[object_type] += 1
+                if stable_side != 0:
+                    if previous_side in (-1, 1) and previous_side != stable_side:
+                        if object_type == "person":
+                            self.people_passed += 1
+                        else:
+                            self.vehicles_passed += 1
+                            self.vehicle_types[object_type] += 1
 
-                    event = {
-                        "time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "camera": self.camera_id,
-                        "type": object_type,
-                        "track_id": track_id,
-                        "direction": "inbound" if side == 1 else "outbound",
-                        "confidence": round(float(confidence), 3),
-                    }
-                    self.events.appendleft(event)
-                    save_event(event)
+                        event = {
+                            "time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                            "camera": self.camera_id,
+                            "type": object_type,
+                            "track_id": track_id,
+                            "direction": "inbound" if stable_side == 1 else "outbound",
+                            "confidence": round(float(confidence), 3),
+                        }
+                        self.events.appendleft(event)
+                        save_event(event)
 
-                self.prev_side[track_id] = side
+                    self.prev_side[track_id] = stable_side
 
                 if is_vehicle:
                     previous_position = self.last_pos.get(track_id)
@@ -323,6 +393,9 @@ class CameraWorker:
                             frame, x1, y1, x2, y2, object_type, track_id
                         )
 
+            self.last_detections = fresh_detections
+            self.last_inference_at = time.strftime("%Y-%m-%d %H:%M:%S")
+
         except Exception as e:
             cv2.putText(
                 frame,
@@ -334,7 +407,7 @@ class CameraWorker:
                 2,
             )
 
-        return frame
+        return self.draw_last_detections(frame)
 
     def try_plate_ocr(self, frame, x1, y1, x2, y2, vehicle_type, track_id):
         vh = max(1, y2 - y1)
@@ -405,6 +478,10 @@ def health():
                 "online": w.connected,
                 "status": w.status,
                 "frame_available": w.frame is not None,
+                "analytics_enabled": w.model is not None,
+                "current_people": w.current_people,
+                "current_vehicles": w.current_vehicles,
+                "last_inference_at": w.last_inference_at,
             }
             for w in workers.values()
         ],
