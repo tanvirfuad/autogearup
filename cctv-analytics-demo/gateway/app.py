@@ -39,7 +39,7 @@ def db():
 def init_db():
     with db() as con:
         con.executescript("""
-        CREATE TABLE IF NOT EXISTS cameras (
+        CREATE TABLE IF NOT EXISTS settings (\n          key TEXT PRIMARY KEY,\n          value TEXT\n        );\n        CREATE TABLE IF NOT EXISTS cameras (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL,
           rtsp_url TEXT NOT NULL,
@@ -65,11 +65,16 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_incidents_ts ON incidents(ts);
         CREATE INDEX IF NOT EXISTS idx_incidents_camera ON incidents(camera);
         """)
+        migrated = con.execute("SELECT value FROM settings WHERE key='legacy_camera_migrated'").fetchone()
         count = con.execute("SELECT COUNT(*) n FROM cameras").fetchone()["n"]
-        if count == 0 and LEGACY_RTSP_URL:
+        if not migrated:
+            if count == 0 and LEGACY_RTSP_URL:
+                con.execute(
+                    "INSERT INTO cameras(name,rtsp_url,enabled,created_at) VALUES(?,?,1,?)",
+                    ("Camera 1", LEGACY_RTSP_URL, time.strftime("%Y-%m-%d %H:%M:%S"))
+                )
             con.execute(
-                "INSERT INTO cameras(name,rtsp_url,enabled,created_at) VALUES(?,?,1,?)",
-                ("Camera 1", LEGACY_RTSP_URL, time.strftime("%Y-%m-%d %H:%M:%S"))
+                "INSERT OR REPLACE INTO settings(key,value) VALUES('legacy_camera_migrated','1')"
             )
 
 
