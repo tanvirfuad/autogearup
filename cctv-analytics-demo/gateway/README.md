@@ -45,3 +45,22 @@ The dashboard provides:
 ## Security
 
 Keep the real camera usernames/passwords only in the local `.env` file. The `.env` file is excluded from GitHub.
+
+
+## Secure public sharing
+
+For a temporary externally shareable live dashboard:
+
+1. Make sure the four camera URLs work locally.
+2. Double-click `start-public-windows.bat`.
+3. On first run it downloads Cloudflare's `cloudflared` client and generates a random 64-character access key in the local `.env`.
+4. It starts:
+   - the private CCTV gateway on port 8000
+   - an authenticated read-only relay on port 8001
+   - a Cloudflare Quick Tunnel to the relay only
+5. The script opens the GitHub Pages dashboard with the tunnel URL and key in the URL fragment. The fragment is consumed by the browser and removed from the address bar.
+6. Copy/share the resulting dashboard link if another authorized viewer needs access.
+
+The relay exposes only camera health, historical analytics, and the four browser-safe MJPEG streams. It does not expose the RTSP URLs, `.env`, SQLite database file, or local filesystem.
+
+The Quick Tunnel URL changes whenever the tunnel is restarted. For a stable production URL, replace the Quick Tunnel with a named Cloudflare Tunnel and a hostname you control.
