@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 load_dotenv()
 
 DETECT_EVERY = max(1, int(os.getenv("DETECT_EVERY", "2")))
+ANALYTICS_INTERVAL = max(0.08, float(os.getenv("ANALYTICS_INTERVAL", "0.25")))
 DETECTION_CONFIDENCE = float(os.getenv("DETECTION_CONFIDENCE", "0.30"))
 COUNT_LINE_Y = float(os.getenv("COUNT_LINE_Y", "0.60"))
 COUNT_HYSTERESIS = float(os.getenv("COUNT_HYSTERESIS", "0.06"))
@@ -123,6 +124,7 @@ class CameraWorker:
         self.frame = None
         self.frame_lock = threading.Lock()
         self.running = False
+        self.analytics_running = False
         self.connected = False
         self.status = "not configured" if not rtsp_url else "starting"
         self.model = None
@@ -170,7 +172,16 @@ class CameraWorker:
         if self.running or not self.rtsp_url:
             return
         self.running = True
-        threading.Thread(target=self.run, daemon=True, name=f"camera-{self.camera_id}").start()
+        threading.Thread(
+            target=self.run,
+            daemon=True,
+            name=f"camera-capture-{self.camera_id}",
+        ).start()
+        threading.Thread(
+            target=self.analytics_loop,
+            daemon=True,
+            name=f"camera-ai-{self.camera_id}",
+        ).start()
 
     def open_capture(self):
         cap = cv2.VideoCapture(self.rtsp_url, cv2.CAP_FFMPEG)
@@ -178,7 +189,8 @@ class CameraWorker:
         return cap
 
     def run(self):
-        self.load_models()
+        # Capture is intentionally independent from AI. A slow model must never
+        # stop the operator from seeing the live camera.
         while self.running:
             self.status = "connecting"
             cap = self.open_capture()
@@ -202,17 +214,33 @@ class CameraWorker:
                     break
 
                 self.frame_no += 1
-                if self.model:
-                    if self.frame_no % DETECT_EVERY == 0:
-                        frame = self.analyze(frame)
-                    else:
-                        frame = self.draw_last_detections(frame)
-
                 with self.frame_lock:
                     self.frame = frame
 
             cap.release()
             time.sleep(1)
+
+    def analytics_loop(self):
+        self.analytics_running = True
+        try:
+            self.load_models()
+            if self.model is None:
+                return
+
+            while self.running:
+                with self.frame_lock:
+                    sample = None if self.frame is None else self.frame.copy()
+
+                if sample is None:
+                    time.sleep(0.10)
+                    continue
+
+                # Analyze a snapshot. The capture thread continues receiving
+                # frames while inference/tracking happens here.
+                self.analyze(sample)
+                time.sleep(ANALYTICS_INTERVAL)
+        finally:
+            self.analytics_running = False
 
     def draw_last_detections(self, frame):
         h, w = frame.shape[:2]
@@ -514,6 +542,7 @@ def health():
                 "status": w.status,
                 "frame_available": w.frame is not None,
                 "analytics_enabled": w.model is not None,
+                "analytics_running": w.analytics_running,
                 "current_people": w.current_people,
                 "current_vehicles": w.current_vehicles,
                 "last_inference_at": w.last_inference_at,
@@ -680,6 +709,9 @@ def mjpeg(worker):
                 2,
             )
             frame = placeholder
+
+        if worker.model is not None:
+            frame = worker.draw_last_detections(frame)
 
         ok, jpg = cv2.imencode(
             ".jpg",
