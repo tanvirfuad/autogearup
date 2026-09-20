@@ -17,7 +17,7 @@ main{padding:24px;max-width:1600px;margin:auto}.filters{display:flex;gap:7px;fle
 .alerts{display:flex;flex-direction:column;gap:8px;max-height:395px;overflow:auto}.alert{display:grid;grid-template-columns:34px 1fr auto;gap:9px;padding:10px;border:1px solid #27313d;border-radius:11px;background:#111821}.ico{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:#29191d;color:#ff929d}.alert b{font-size:11px}.alert p{font-size:9px;color:var(--muted);margin:3px 0}.alert time{font-size:9px;color:#768395}
 .bottom{display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-top:14px}.chart{height:230px;display:flex;align-items:end;gap:8px;border-bottom:1px solid var(--line);padding-top:15px}.col{height:100%;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px}.bw{height:calc(100% - 20px);width:100%;display:flex;align-items:end;justify-content:center;gap:3px}.bar{width:32%;min-height:3px;border-radius:4px 4px 0 0}.people{background:var(--green)}.vehicles{background:var(--blue)}.col small{color:#728092;font-size:8px}.types{display:grid;grid-template-columns:1fr 1fr;gap:8px}.type{border:1px solid #27313d;border-radius:11px;padding:11px;background:#111821}.type span{color:var(--muted);font-size:9px}.type b{font-size:21px;display:block;margin-top:4px}.meter{height:4px;background:#27313d;border-radius:99px;margin-top:7px;overflow:hidden}.meter i{height:100%;display:block;background:var(--blue)}
 .table{margin-top:14px;overflow:auto}.table table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;padding:10px 7px;border-bottom:1px solid #202936;font-size:10px}th{color:#758295}.plate{display:inline-block;background:#edf1f4;color:#101820;font:800 10px ui-monospace,monospace;letter-spacing:.5px;padding:4px 6px;border-radius:4px}.ok{color:var(--green)}
-.view{display:none}.view.active{display:block}.big{min-height:420px}.empty{height:360px;border:1px dashed #364150;border-radius:14px;display:grid;place-items:center;color:var(--muted);text-align:center;padding:30px}.modal{position:fixed;inset:0;background:#000b;display:none;place-items:center;z-index:20}.modal.show{display:grid}.modalbox{width:min(600px,92vw);background:#111821;border:1px solid #35404d;border-radius:16px;padding:20px}.modalbox pre{white-space:pre-wrap;background:#080b0f;padding:13px;border-radius:10px;color:#a9e8cf}.modalbox button{float:right;padding:9px 14px;border-radius:9px;border:0;cursor:pointer}
+.view{display:none}.view.active{display:block}.big{min-height:420px}.camera-form{display:grid;grid-template-columns:180px 1fr auto;gap:8px;margin:14px 0}.camera-form input{background:#0b1016;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:11px}.camera-form button,.camera-action{background:#edf1f4;color:#091018;border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer}.camera-list{display:flex;flex-direction:column;gap:8px}.camera-row{display:grid;grid-template-columns:1.2fr 2fr auto auto;gap:10px;align-items:center;border:1px solid #27313d;background:#0d131a;border-radius:11px;padding:11px}.camera-row small{color:var(--muted);overflow:hidden;text-overflow:ellipsis}.status{font-size:10px;border:1px solid #34404d;border-radius:999px;padding:5px 8px}.status.online{border-color:#1f684e;color:#9ff1cf}.danger{background:#2a1519;color:#ff9ba5;border:1px solid #5b2730}.empty{height:360px;border:1px dashed #364150;border-radius:14px;display:grid;place-items:center;color:var(--muted);text-align:center;padding:30px}.modal{position:fixed;inset:0;background:#000b;display:none;place-items:center;z-index:20}.modal.show{display:grid}.modalbox{width:min(600px,92vw);background:#111821;border:1px solid #35404d;border-radius:16px;padding:20px}.modalbox pre{white-space:pre-wrap;background:#080b0f;padding:13px;border-radius:10px;color:#a9e8cf}.modalbox button{float:right;padding:9px 14px;border-radius:9px;border:0;cursor:pointer}
 @media(max-width:1000px){.app{grid-template-columns:1fr}aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}nav{display:flex;overflow:auto}nav button{width:auto;white-space:nowrap}.side{display:none}.cards{grid-template-columns:1fr 1fr}.split,.bottom{grid-template-columns:1fr}header{top:0}}
 @media(max-width:600px){main{padding:15px}.cards{grid-template-columns:1fr 1fr}.cams{grid-template-columns:1fr}.num{font-size:26px}.custom.show{width:100%;flex-wrap:wrap}}
 </style>
@@ -32,17 +32,26 @@ main{padding:24px;max-width:1600px;margin:auto}.filters{display:flex;gap:7px;fle
 <section class="view active" id="dash">
 <div class="filters"><button class="active" data-period="today">Today</button><button data-period="week">This Week</button><button data-period="month">This Month</button><button data-period="year">This Year</button><button data-period="custom">Custom</button><div class="custom" id="custom"><input type="date" id="from"><input type="date" id="to"><button id="apply">Apply</button></div></div>
 <div class="cards"><div class="card stat"><label>PEOPLE PASSED</label><div class="num" id="people">186</div><div class="sub">Unique tracked crossings</div></div><div class="card stat"><label>VEHICLES PASSED</label><div class="num" id="vehicles">421</div><div class="sub">Across all cameras</div></div><div class="card stat"><label>READABLE PLATES</label><div class="num" id="plates">318</div><div class="sub"><span id="rate">75.5%</span> plate-read rate</div></div><div class="card stat"><label>MAJOR INCIDENTS</label><div class="num" id="incidentCount">3</div><div class="sub">Requires review</div></div></div>
-<div class="split"><div class="card"><div class="head"><h2>Live Camera Wall</h2><span id="cameraMode">AI overlays simulated</span></div><div class="cams">
-<div class="cam" id="cam1"><img id="liveCam" class="livevideo" alt="Live Camera 1" style="display:none"><span class="cam-title">CAM 01 · FRONT</span><span class="clock"></span><span class="demoOnly"><i class="vehicle" style="left:52%;bottom:20%"></i><i class="person" style="left:23%;bottom:48%"></i><div class="box" style="left:49%;bottom:17%;width:29%;height:25%"><span>SUV 94%</span></div><div class="box green" style="left:20%;bottom:45%;width:8%;height:25%"><span>Person 97%</span></div></span></div>
-<div class="cam"><span class="cam-title">CAM 02 · PARKING</span><span class="clock"></span><i class="vehicle" style="left:22%;bottom:24%"></i><div class="box" style="left:19%;bottom:20%;width:29%;height:25%"><span>Sedan 96%</span></div><div class="box amber" style="left:29%;bottom:22%;width:12%;height:8%"><span>CXRP 219</span></div></div>
-<div class="cam"><span class="cam-title">CAM 03 · SERVICE DRIVE</span><span class="clock"></span><i class="vehicle" style="left:58%;bottom:18%"></i><div class="box" style="left:55%;bottom:15%;width:30%;height:25%"><span>Van 91%</span></div></div>
-<div class="cam"><span class="cam-title">CAM 04 · REAR LOT</span><span class="clock"></span><i class="person" style="left:61%;bottom:43%"></i><div class="box green" style="left:58%;bottom:40%;width:9%;height:25%"><span>Person 95%</span></div></div>
+<div class="split"><div class="card"><div class="head"><h2>Live Camera Wall</h2><span id="cameraMode">AI overlays simulated</span></div><div class="cams" id="cameraWall">
+<div class="cam demoCam"><span class="cam-title">DEMO · FRONT</span><span class="clock"></span><i class="vehicle" style="left:52%;bottom:20%"></i><i class="person" style="left:23%;bottom:48%"></i><div class="box" style="left:49%;bottom:17%;width:29%;height:25%"><span>SUV 94%</span></div><div class="box green" style="left:20%;bottom:45%;width:8%;height:25%"><span>Person 97%</span></div></div>
+<div class="cam demoCam"><span class="cam-title">DEMO · PARKING</span><span class="clock"></span><i class="vehicle" style="left:22%;bottom:24%"></i><div class="box" style="left:19%;bottom:20%;width:29%;height:25%"><span>Sedan 96%</span></div></div>
 </div></div>
-<div class="card"><div class="head"><h2>Incident Monitor</h2><span>Rules + AI</span></div><div class="alerts" id="alerts"></div></div></div>
+<div class="card"><div class="head"><h2>Incident Monitor</h2><div class="card"><div class="head"><h2>Incident Monitor</h2><span>Rules + AI</span></div><div class="alerts" id="alerts"></div></div></div>
 <div class="bottom"><div class="card"><div class="head"><h2>Traffic Activity</h2><span>People / vehicles</span></div><div class="chart" id="chart"></div></div><div class="card"><div class="head"><h2>Vehicle Types</h2><span id="typePeriod">Today</span></div><div class="types" id="types"></div></div></div>
 <div class="card table"><div class="head"><h2>Latest Vehicle Detections</h2><span>Updates every few seconds</span></div><table><thead><tr><th>TIME</th><th>CAMERA</th><th>TYPE</th><th>PLATE</th><th>CONF.</th><th>DIRECTION</th></tr></thead><tbody id="detections"></tbody></table></div>
 </section>
-<section class="view" id="cameras"><div class="card big"><div class="head"><h2>Camera Connections</h2><button id="connect">Connect CCTV / NVR</button></div><div class="empty"><div><h2>4 demo camera feeds</h2><p>Production mode will ingest RTSP from a local gateway and send browser-safe HLS/WebRTC previews plus detection events.</p></div></div></div></section>
+<section class="view" id="cameras">
+<div class="card big">
+<div class="head"><div><h2>Camera Connections</h2><span>Paste an RTSP link just like VLC</span></div></div>
+<div class="camera-form">
+<input id="cameraName" placeholder="Camera name e.g. Front Door">
+<input id="cameraUrl" placeholder="rtsp://username:password@192.168.x.x:554/...">
+<button id="addCamera">Add Camera</button>
+</div>
+<div id="cameraMessage" style="min-height:20px;color:var(--muted);font-size:11px"></div>
+<div class="camera-list" id="cameraList"><div class="empty"><div><h2>Local gateway required</h2><p>Open this dashboard through http://localhost:8000 to add and manage real cameras.</p></div></div></div>
+</div>
+</section>
 <section class="view" id="history"><div class="card"><div class="head"><h2>Historical Analytics</h2><span>Today · Week · Month · Year · Custom</span></div><p style="color:var(--muted);line-height:1.8">The same dashboard metrics are designed to be queried from stored detection events by date range, camera, vehicle type, plate confidence, direction and incident severity.</p></div></section>
 <section class="view" id="plates"><div class="card table"><div class="head"><h2>License Plate Detections</h2><span>Readable plates only</span></div><table><thead><tr><th>TIME</th><th>CAMERA</th><th>PLATE</th><th>CONFIDENCE</th><th>TYPE</th><th>DIRECTION</th></tr></thead><tbody id="plateTable"></tbody></table></div></section>
 <section class="view" id="incidents"><div class="card"><div class="head"><h2>Incident Center</h2><span>Review queue</span></div><div class="alerts" id="incidentAll"></div></div></section>
@@ -72,7 +81,7 @@ function sim(){if(liveMode||period!=='today')return;if(Math.random()>.35){bump.v
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(b.dataset.view).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');let map={dash:['Operations Dashboard','Real-time people, vehicles, plates and incidents'],cameras:['Cameras','CCTV feed and gateway management'],history:['Historical Analytics','Past data and reporting'],plates:['License Plates','Readable vehicle plate events'],incidents:['Incident Center','Major events and review queue']};title.textContent=map[b.dataset.view][0];subtitle.textContent=map[b.dataset.view][1]});
 document.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-period]').forEach(x=>x.classList.remove('active'));b.classList.add('active');period=b.dataset.period;custom.classList.toggle('show',period==='custom');if(period!=='custom'){if(liveMode)loadLiveHistory(period);else stats(mult[period],{today:'Today',week:'This Week',month:'This Month',year:'This Year'}[period])}});
 apply.onclick=()=>{let d=Math.max(1,(new Date(to.value)-new Date(from.value))/86400000+1);period='custom';if(liveMode)loadLiveHistory('custom',from.value,to.value);else{stats(d*.98,d+' day range');draw(d<=2?'today':d<=10?'week':d<=60?'month':'year')}};
-connect.onclick=()=>modal.classList.add('show');close.onclick=()=>modal.classList.remove('show');
+close.onclick=()=>modal.classList.remove('show');
 let now=new Date();to.value=now.toISOString().slice(0,10);now.setDate(now.getDate()-6);from.value=now.toISOString().slice(0,10);
 incidents();tables();stats();clock();checkGateway();setInterval(clock,1000);setInterval(sim,3000);
 function renderLiveData(d,label){
@@ -83,10 +92,10 @@ function renderLiveData(d,label){
   types.innerHTML=order.map(k=>'<div class="type"><span>'+k.toUpperCase()+'</span><b>'+fmt(vt[k]||0)+'</b><div class="meter"><i style="width:'+Math.min(100,((vt[k]||0)/total)*100)+'%"></i></div></div>').join('');
   typePeriod.textContent=label||'Live';
   const pmap={}; (d.latest_plates||[]).forEach(p=>pmap[p.track_id]=p);
-  rows=(d.latest_events||[]).slice(0,8).map(e=>{const p=pmap[e.track_id];return[(e.time||'').split(' ').pop()||'', 'Cam 01', (e.type||'').replace(/^./,x=>x.toUpperCase()), p?p.plate:'—', Math.round((e.confidence||0)*100)+'%', (e.direction||'').replace(/^./,x=>x.toUpperCase())]});
+  rows=(d.latest_events||[]).slice(0,8).map(e=>{const p=pmap[e.track_id];return[(e.time||'').split(' ').pop()||'', e.camera_name||('Camera '+e.camera), (e.type||'').replace(/^./,x=>x.toUpperCase()), p?p.plate:'—', Math.round((e.confidence||0)*100)+'%', (e.direction||'').replace(/^./,x=>x.toUpperCase())]});
   tables();
   const incidentRows=d.incidents||[];
-  if(incidentRows.length){const h=incidentRows.map(x=>'<div class="alert"><div class="ico">⚠</div><div><b>'+((x.type||'incident').replaceAll('_',' '))+'</b><p>'+(x.description||'')+'</p></div><time>'+((x.time||'').split(' ').pop()||'')+'</time></div>').join('');alerts.innerHTML=h;incidentAll.innerHTML=h;}
+  if(incidentRows.length){const h=incidentRows.map(x=>'<div class="alert"><div class="ico">⚠</div><div><b>'+((x.type||'incident').replaceAll('_',' '))+'</b><p>'+(x.camera_name||('Camera '+x.camera))+' · '+(x.description||'')+'</p></div><time>'+((x.time||'').split(' ').pop()||'')+'</time></div>').join('');alerts.innerHTML=h;incidentAll.innerHTML=h;}
   else {alerts.innerHTML='<div class="empty" style="height:120px">No incidents in this period.</div>';incidentAll.innerHTML=alerts.innerHTML;}
 }
 async function loadLiveHistory(p=period,startDate='',endDate=''){
@@ -105,14 +114,66 @@ async function refreshLive(){
   if(period==='custom') await loadLiveHistory('custom',from.value,to.value);
   else await loadLiveHistory(period);
 }
+let cameraCache=[];
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+async function loadCameras(){
+  if(!liveMode)return;
+  try{
+    const r=await fetch('/api/cameras',{cache:'no-store'}); if(!r.ok)return;
+    cameraCache=await r.json();
+    renderCameraWall(); renderCameraList();
+    const online=cameraCache.filter(x=>x.online).length;
+    const side=document.querySelector('.side');
+    if(side)side.innerHTML='<span class="dot"></span>'+online+' / '+cameraCache.length+' cameras online<br><br>Local gateway active';
+    cameraMode.textContent=cameraCache.length?online+' of '+cameraCache.length+' cameras online':'No cameras added';
+  }catch(e){}
+}
+function renderCameraWall(){
+  if(!cameraCache.length){
+    cameraWall.innerHTML='<div class="empty" style="grid-column:1/-1;height:220px"><div><h2>No cameras yet</h2><p>Open Cameras and paste an RTSP link.</p></div></div>';
+    return;
+  }
+  cameraWall.innerHTML=cameraCache.map(cam=>'<div class="cam live"><img class="livevideo" alt="'+esc(cam.name)+'" src="/api/cameras/'+cam.id+'/stream?t='+Date.now()+'"><span class="cam-title">'+esc(cam.name)+'</span><span class="clock"></span><span class="status '+(cam.online?'online':'')+'" style="position:absolute;right:8px;bottom:8px;z-index:4;background:#071018cc">'+esc(cam.status)+'</span></div>').join('');
+  clock();
+}
+function renderCameraList(){
+  if(!cameraCache.length){cameraList.innerHTML='<div class="empty" style="height:180px"><div><h2>No cameras added</h2><p>Paste the same RTSP link you would use in VLC.</p></div></div>';return;}
+  cameraList.innerHTML=cameraCache.map(cam=>'<div class="camera-row"><div><b>'+esc(cam.name)+'</b><br><small>Camera ID '+cam.id+'</small></div><small>'+esc(cam.connection)+'</small><span class="status '+(cam.online?'online':'')+'">'+esc(cam.status)+'</span><button class="camera-action danger" onclick="removeCamera('+cam.id+')">Delete</button></div>').join('');
+}
+async function createCamera(){
+  const name=cameraName.value.trim()||('Camera '+(cameraCache.length+1));
+  const rtsp_url=cameraUrl.value.trim();
+  if(!rtsp_url){cameraMessage.textContent='Paste an RTSP link first.';return;}
+  cameraMessage.textContent='Adding camera...';
+  try{
+    const r=await fetch('/api/cameras',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,rtsp_url})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.detail||'Could not add camera');
+    cameraUrl.value=''; cameraName.value=''; cameraMessage.textContent='Camera added. It may take a few seconds to connect.';
+    await loadCameras(); await refreshLive();
+  }catch(e){cameraMessage.textContent=e.message}
+}
+async function removeCamera(id){
+  if(!confirm('Delete this camera from the local gateway?'))return;
+  try{
+    const r=await fetch('/api/cameras/'+id,{method:'DELETE'}); const d=await r.json();
+    if(!r.ok)throw new Error(d.detail||'Could not delete camera');
+    cameraMessage.textContent='Camera removed.'; await loadCameras(); await refreshLive();
+  }catch(e){cameraMessage.textContent=e.message}
+}
+addCamera.onclick=createCamera;
+cameraUrl.addEventListener('keydown',e=>{if(e.key==='Enter')createCamera()});
 async function checkGateway(){
   try{
     const r=await fetch('/api/health',{cache:'no-store'}); if(!r.ok)return;
-    const h=await r.json(); if(!h.ok||!h.camera_configured)return;
-    liveMode=true; cam1.classList.add('live'); liveCam.style.display='block'; liveCam.src='/api/cameras/1/stream?t='+Date.now();
-    modePill.textContent='● LIVE CAMERA'; cameraMode.textContent=h.analytics_enabled?'Local AI analytics':'Live feed connected'; subtitle.textContent='Live camera analytics from local gateway';
-    const side=document.querySelector('.side'); if(side)side.innerHTML='<span class="dot"></span>Camera 1 connected<br><br>Local gateway active';
-    await loadLiveHistory('today'); setInterval(refreshLive,2000);
+    const h=await r.json(); if(!h.ok)return;
+    liveMode=true;
+    modePill.textContent='● LOCAL LIVE';
+    subtitle.textContent='Live multi-camera analytics from local gateway';
+    await loadCameras();
+    await loadLiveHistory('today');
+    setInterval(refreshLive,2000);
+    setInterval(loadCameras,5000);
   }catch(e){}
 }
 
