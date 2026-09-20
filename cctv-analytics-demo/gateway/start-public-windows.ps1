@@ -163,7 +163,11 @@ try {
     Write-Host ''
 
     try { Set-Clipboard -Value $dashboard } catch { }
+    $linkFile = Join-Path $PSScriptRoot 'CURRENT_PUBLIC_LINK.txt'
+    Set-Content -Path $linkFile -Value $dashboard -Encoding UTF8
     Write-Host 'The secure dashboard link has been copied to your clipboard.'
+    Write-Host 'It is also saved as CURRENT_PUBLIC_LINK.txt in this folder.' -ForegroundColor Green
+    Write-Host 'IMPORTANT: older trycloudflare.com links stop working after a restart.' -ForegroundColor Yellow
     Start-Process $dashboard
 
     Read-Host 'Press Enter to stop public sharing'
