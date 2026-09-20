@@ -121,7 +121,8 @@ function renderCameraHealth(cameras){
   cameras.forEach(cam=>{
     const id=cam.id, box=document.getElementById('cam'+id), img=document.getElementById('liveCam'+id), title=document.getElementById('camTitle'+id), status=document.getElementById('camStatus'+id);
     title.textContent=cam.name||('Camera '+id);
-    status.textContent=cam.configured?cam.status:'Not configured';
+    const nowDetected=(cam.current_people||0)+' person'+((cam.current_people||0)===1?'':'s')+' · '+(cam.current_vehicles||0)+' vehicle'+((cam.current_vehicles||0)===1?'':'s');
+    status.textContent=cam.configured?(cam.online?(cam.analytics_enabled?nowDetected:'Video only · AI unavailable'):cam.status):'Not configured';
     status.classList.toggle('online',!!cam.online);
     if(cam.configured){
       box.classList.add('live');
@@ -132,7 +133,7 @@ function renderCameraHealth(cameras){
       img.style.display='none';
       img.removeAttribute('src');
     }
-    cards.push('<div class="type"><span>'+String(cam.name||('CAMERA '+id)).toUpperCase()+'</span><b style="font-size:14px">'+(cam.configured?(cam.online?'Online':cam.status):'Not configured')+'</b></div>');
+    cards.push('<div class="type"><span>'+String(cam.name||('CAMERA '+id)).toUpperCase()+'</span><b style="font-size:14px">'+(cam.configured?(cam.online?((cam.current_people||0)+' people · '+(cam.current_vehicles||0)+' vehicles'):cam.status):'Not configured')+'</b></div>');
   });
   cameraConnections.innerHTML=cards.join('');
 }
