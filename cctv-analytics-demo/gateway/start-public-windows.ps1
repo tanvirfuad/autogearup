@@ -91,6 +91,24 @@ try {
         throw ('Local CCTV gateway failed to start. ' + $msg)
     }
 
+    Write-Host ''
+    Write-Host 'Checking AI camera status...' -ForegroundColor Yellow
+    try {
+        $health = Invoke-RestMethod -UseBasicParsing -Uri 'http://127.0.0.1:8000/api/health' -TimeoutSec 15
+        foreach ($cam in $health.cameras) {
+            $ai = if ($cam.analytics_enabled) { 'AI ON' } else { 'AI OFF' }
+            $online = if ($cam.online) { 'ONLINE' } else { ($cam.status).ToUpper() }
+            Write-Host ('Camera ' + $cam.id + ' - ' + $cam.name + ': ' + $online + ' | ' + $ai + ' | Now: ' + $cam.current_people + ' people / ' + $cam.current_vehicles + ' vehicles')
+        }
+        if (-not $health.analytics_enabled) {
+            Write-Host ''
+            Write-Host 'WARNING: Video may work, but YOLO AI is not loaded.' -ForegroundColor Red
+            Write-Host 'Check gateway-error.log and gateway.log in this folder.' -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host ('Could not read AI health yet: ' + $_.Exception.Message) -ForegroundColor Yellow
+    }
+    Write-Host ''
     Write-Host 'Starting authenticated public relay...' -ForegroundColor Yellow
     $relay = Start-Process -FilePath $python -ArgumentList '-m','uvicorn','public_proxy:app','--host','127.0.0.1','--port','8001','--no-access-log' -WorkingDirectory $PSScriptRoot -RedirectStandardOutput $relayLog -RedirectStandardError $relayErr -PassThru
     Start-Sleep -Seconds 3
