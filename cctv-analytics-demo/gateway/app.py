@@ -14,14 +14,26 @@ load_dotenv()
 
 DETECT_EVERY = max(1, int(os.getenv("DETECT_EVERY", "2")))
 ANALYTICS_INTERVAL = max(0.08, float(os.getenv("ANALYTICS_INTERVAL", "0.25")))
-DETECTION_CONFIDENCE = float(os.getenv("DETECTION_CONFIDENCE", "0.30"))
+RECOGNITION_PROFILE = os.getenv("RECOGNITION_PROFILE", "accurate").strip().lower()
+DETECTION_CONFIDENCE = float(os.getenv("DETECTION_CONFIDENCE", "0.20"))
+DETECTION_IMGSZ = max(640, int(os.getenv("DETECTION_IMGSZ", "960")))
+TRACKER_CONFIG = os.getenv("TRACKER_CONFIG", "bytetrack.yaml").strip() or "bytetrack.yaml"
 COUNT_LINE_Y = float(os.getenv("COUNT_LINE_Y", "0.60"))
 COUNT_HYSTERESIS = float(os.getenv("COUNT_HYSTERESIS", "0.06"))
 PASS_MOVEMENT_RATIO = float(os.getenv("PASS_MOVEMENT_RATIO", "0.035"))
 PASS_MIN_TRACK_SECONDS = float(os.getenv("PASS_MIN_TRACK_SECONDS", "0.35"))
 STOPPED_SECONDS = int(os.getenv("STOPPED_SECONDS", "240"))
 ENABLE_PLATE_OCR = os.getenv("ENABLE_PLATE_OCR", "false").lower() == "true"
-YOLO_MODEL = os.getenv("YOLO_MODEL", "yolo11n.pt")
+
+_requested_model = os.getenv("YOLO_MODEL", "").strip()
+if RECOGNITION_PROFILE == "fast":
+    YOLO_MODEL = _requested_model or "yolo26n.pt"
+elif RECOGNITION_PROFILE == "balanced":
+    YOLO_MODEL = _requested_model if _requested_model not in ("", "yolo11n.pt") else "yolo26n.pt"
+else:
+    # Accurate profile intentionally upgrades old installations that still
+    # contain the original yolo11n.pt default in .env.
+    YOLO_MODEL = _requested_model if _requested_model not in ("", "yolo11n.pt") else "yolo26s.pt"
 DB_PATH = os.getenv("DATABASE_PATH", str(Path(__file__).resolve().parent / "cctv.db"))
 
 CAMERAS = [
@@ -128,6 +140,7 @@ class CameraWorker:
         self.connected = False
         self.status = "not configured" if not rtsp_url else "starting"
         self.model = None
+        self.model_name = YOLO_MODEL
         self.ocr = None
         self.frame_no = 0
         self.prev_side = {}
@@ -153,12 +166,40 @@ class CameraWorker:
     def load_models(self):
         if not self.rtsp_url:
             return
+
         try:
             from ultralytics import YOLO
-            self.model = YOLO(YOLO_MODEL)
-            print(f"[Camera {self.camera_id}] YOLO loaded")
+
+            candidates = []
+            for name in (YOLO_MODEL, "yolo26n.pt", "yolo11s.pt", "yolo11n.pt"):
+                if name and name not in candidates:
+                    candidates.append(name)
+
+            for candidate in candidates:
+                try:
+                    self.model = YOLO(candidate)
+                    self.model_name = candidate
+                    print(
+                        f"[Camera {self.camera_id}] AI loaded: {candidate} "
+                        f"imgsz={DETECTION_IMGSZ} conf={DETECTION_CONFIDENCE}"
+                    )
+                    break
+                except Exception as model_error:
+                    print(
+                        f"[Camera {self.camera_id}] Could not load {candidate}: "
+                        f"{model_error}"
+                    )
+
+            if self.model is None:
+                print(
+                    f"[Camera {self.camera_id}] YOLO unavailable; "
+                    "live video will still work"
+                )
         except Exception as e:
-            print(f"[Camera {self.camera_id}] YOLO unavailable; live video will still work: {e}")
+            print(
+                f"[Camera {self.camera_id}] Ultralytics unavailable; "
+                f"live video will still work: {e}"
+            )
 
         if ENABLE_PLATE_OCR:
             try:
@@ -305,9 +346,11 @@ class CameraWorker:
                 persist=True,
                 verbose=False,
                 classes=list(allowed.keys()),
-                tracker="bytetrack.yaml",
+                tracker=TRACKER_CONFIG,
                 conf=DETECTION_CONFIDENCE,
-                iou=0.50,
+                iou=0.55,
+                imgsz=DETECTION_IMGSZ,
+                max_det=120,
             )
 
             if not results:
@@ -543,6 +586,10 @@ def health():
                 "frame_available": w.frame is not None,
                 "analytics_enabled": w.model is not None,
                 "analytics_running": w.analytics_running,
+                "model": w.model_name if w.model is not None else None,
+                "detection_imgsz": DETECTION_IMGSZ,
+                "detection_confidence": DETECTION_CONFIDENCE,
+                "recognition_profile": RECOGNITION_PROFILE,
                 "current_people": w.current_people,
                 "current_vehicles": w.current_vehicles,
                 "last_inference_at": w.last_inference_at,
