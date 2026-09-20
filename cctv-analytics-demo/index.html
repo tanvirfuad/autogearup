@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AutoGearUp CCTV Analytics</title>
+<title>AutoGearUp CCTV Analytics</title><meta name="referrer" content="no-referrer">
 <style>
 :root{--bg:#07090d;--panel:#10151d;--panel2:#151c26;--line:#27303c;--text:#f3f7fb;--muted:#8f9cad;--green:#48e0a4;--blue:#5aa8ff;--amber:#f6be5c;--red:#ff6b78}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px Inter,system-ui,Segoe UI,Arial,sans-serif}.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
@@ -19,7 +19,7 @@ main{padding:24px;max-width:1600px;margin:auto}.filters{display:flex;gap:7px;fle
 .table{margin-top:14px;overflow:auto}.table table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;padding:10px 7px;border-bottom:1px solid #202936;font-size:10px}th{color:#758295}.plate{display:inline-block;background:#edf1f4;color:#101820;font:800 10px ui-monospace,monospace;letter-spacing:.5px;padding:4px 6px;border-radius:4px}.ok{color:var(--green)}
 .view{display:none}.view.active{display:block}.big{min-height:420px}.empty{height:360px;border:1px dashed #364150;border-radius:14px;display:grid;place-items:center;color:var(--muted);text-align:center;padding:30px}.modal{position:fixed;inset:0;background:#000b;display:none;place-items:center;z-index:20}.modal.show{display:grid}.modalbox{width:min(600px,92vw);background:#111821;border:1px solid #35404d;border-radius:16px;padding:20px}.modalbox pre{white-space:pre-wrap;background:#080b0f;padding:13px;border-radius:10px;color:#a9e8cf}.modalbox button{float:right;padding:9px 14px;border-radius:9px;border:0;cursor:pointer}
 @media(max-width:1000px){.app{grid-template-columns:1fr}aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}nav{display:flex;overflow:auto}nav button{width:auto;white-space:nowrap}.side{display:none}.cards{grid-template-columns:1fr 1fr}.split,.bottom{grid-template-columns:1fr}header{top:0}}
-@media(max-width:600px){main{padding:15px}.cards{grid-template-columns:1fr 1fr}.cams{grid-template-columns:1fr}.num{font-size:26px}.custom.show{width:100%;flex-wrap:wrap}}
+@media(max-width:600px){main{padding:15px}.cards{grid-template-columns:1fr 1fr}.cams{grid-template-columns:1fr}.num{font-size:26px}.custom.show{width:100%;flex-wrap:wrap}#cameras [style*="grid-template-columns:1fr 1fr auto"]{grid-template-columns:1fr!important}}
 </style>
 </head>
 <body>
@@ -47,7 +47,17 @@ main{padding:24px;max-width:1600px;margin:auto}.filters{display:flex;gap:7px;fle
 <div class="type"><span>CAMERA 2</span><b>Checking…</b></div>
 <div class="type"><span>CAMERA 3</span><b>Checking…</b></div>
 <div class="type"><span>CAMERA 4</span><b>Checking…</b></div>
-</div><p style="color:var(--muted);line-height:1.7;margin-top:18px">Four fixed RTSP camera slots are configured privately in the gateway <code>.env</code> file. Credentials are never placed in the dashboard or GitHub.</p></div></section>
+</div>
+<div style="margin-top:18px;border-top:1px solid var(--line);padding-top:16px">
+<div class="head"><h2>Remote Connection</h2><span>For the public GitHub Pages dashboard</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px">
+<input id="remoteGateway" placeholder="https://xxxxx.trycloudflare.com" style="background:#0b1016;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px">
+<input id="remoteKey" type="password" placeholder="Remote access key" style="background:#0b1016;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px">
+<button id="remoteConnect" style="border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer">Connect</button>
+</div>
+<div id="remoteMessage" style="margin-top:8px;color:var(--muted);font-size:11px"></div>
+</div>
+<p style="color:var(--muted);line-height:1.7;margin-top:18px">Four fixed RTSP camera slots are configured privately in the gateway <code>.env</code> file. RTSP credentials are never placed in GitHub.</p></div></section>
 <section class="view" id="history"><div class="card"><div class="head"><h2>Historical Analytics</h2><span>Today · Week · Month · Year · Custom</span></div><p style="color:var(--muted);line-height:1.8">The same dashboard metrics are designed to be queried from stored detection events by date range, camera, vehicle type, plate confidence, direction and incident severity.</p></div></section>
 <section class="view" id="plates"><div class="card table"><div class="head"><h2>License Plate Detections</h2><span>Readable plates only</span></div><table><thead><tr><th>TIME</th><th>CAMERA</th><th>PLATE</th><th>CONFIDENCE</th><th>TYPE</th><th>DIRECTION</th></tr></thead><tbody id="plateTable"></tbody></table></div></section>
 <section class="view" id="incidents"><div class="card"><div class="head"><h2>Incident Center</h2><span>Review queue</span></div><div class="alerts" id="incidentAll"></div></div></section>
@@ -61,7 +71,7 @@ const base={p:186,v:421,l:318,i:3},mult={today:1,week:6.8,month:29.2,year:354},s
 const datasets={today:[[8,15],[12,29],[18,41],[25,52],[34,63],[40,70],[32,61],[22,48],[15,31]],week:[[86,202],[120,310],[154,352],[178,420],[201,465],[225,510],[190,435]],month:[[310,730],[365,860],[430,985],[510,1120],[580,1240],[650,1390],[610,1320],[690,1495],[720,1510],[760,1630]],year:[[3100,7200],[3450,8100],[3720,8600],[3980,9300],[4220,9850],[4590,10400],[4770,11100],[5030,11950],[5310,12500],[5560,13200],[5840,13900],[6120,14500]]};
 const labels={today:['8A','9A','10A','11A','12P','1P','2P','3P','4P'],week:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],month:['W1','','W2','','W3','','W4','','',''],year:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']};
 const inc=[['⚠','Vehicle stopped in restricted zone','Cam 03 · stationary > 4 minutes','12:28 PM'],['↯','Rapid vehicle movement','Cam 02 · movement threshold exceeded','11:42 AM'],['♟','Person entered restricted zone','Cam 04 · rule triggered','09:18 AM'],['✓','Possible fall event reviewed','Cam 01 · cleared by operator','Yesterday']];
-let liveMode=false,period='today',bump={p:0,v:0,l:0},rows=[['12:37:44','Cam 02','SUV','CXRP 219','98%','Inbound'],['12:35:18','Cam 03','Van','BYVD 608','94%','Outbound'],['12:31:52','Cam 01','Sedan','KJMT 441','91%','Inbound'],['12:26:03','Cam 04','Pickup','—','—','Outbound'],['12:20:47','Cam 02','Hatchback','CSPM 701','87%','Inbound']];
+let liveMode=false,remoteBase='',remoteAccessKey='',period='today',bump={p:0,v:0,l:0},rows=[['12:37:44','Cam 02','SUV','CXRP 219','98%','Inbound'],['12:35:18','Cam 03','Van','BYVD 608','94%','Outbound'],['12:31:52','Cam 01','Sedan','KJMT 441','91%','Inbound'],['12:26:03','Cam 04','Pickup','—','—','Outbound'],['12:20:47','Cam 02','Hatchback','CSPM 701','87%','Inbound']];
 const fmt=n=>Math.round(n).toLocaleString();
 function stats(m=1,label='Today'){people.textContent=fmt(base.p*m+(period==='today'?bump.p:0));vehicles.textContent=fmt(base.v*m+(period==='today'?bump.v:0));plates.textContent=fmt(base.l*m+(period==='today'?bump.l:0));incidentCount.textContent=fmt(base.i*Math.max(1,Math.pow(m,.7)));rate.textContent=(base.l/base.v*100).toFixed(1)+'%';typePeriod.textContent=label;types.innerHTML=shares.map(x=>'<div class="type"><span>'+x[0].toUpperCase()+'</span><b>'+fmt((base.v*m+(period==='today'?bump.v:0))*x[1]/100)+'</b><div class="meter"><i style="width:'+Math.min(100,x[1]*2.2)+'%"></i></div></div>').join('');draw(period)}
 function draw(p){let d=datasets[p]||datasets.week,l=labels[p]||labels.week,m=Math.max(...d.flat());chart.innerHTML=d.map((x,i)=>'<div class="col"><div class="bw"><i class="bar people" style="height:'+x[0]/m*100+'%"></i><i class="bar vehicles" style="height:'+x[1]/m*100+'%"></i></div><small>'+(l[i]||'')+'</small></div>').join('')}
@@ -95,7 +105,7 @@ async function loadLiveHistory(p=period,startDate='',endDate=''){
   try{
     const qs=new URLSearchParams({period:p});
     if(startDate)qs.set('start',startDate); if(endDate)qs.set('end',endDate);
-    const r=await fetch('/api/history?'+qs.toString(),{cache:'no-store'}); if(!r.ok)return;
+    const path=(remoteBase?remoteBase+'/history':'/api/history')+'?'+qs.toString()+(remoteBase?'&key='+encodeURIComponent(remoteAccessKey):''); const r=await fetch(path,{cache:'no-store'}); if(!r.ok)return;
     const d=await r.json();
     const labelsMap={today:'Today',week:'This Week',month:'This Month',year:'This Year',custom:'Custom'};
     renderLiveData(d,labelsMap[p]||'Live');
@@ -115,7 +125,7 @@ function renderCameraHealth(cameras){
     status.classList.toggle('online',!!cam.online);
     if(cam.configured){
       box.classList.add('live');
-      if(!img.src) img.src='/api/cameras/'+id+'/stream?t='+Date.now();
+      if(!img.src) img.src=remoteBase?(remoteBase+'/cameras/'+id+'/stream?key='+encodeURIComponent(remoteAccessKey)+'&t='+Date.now()):('/api/cameras/'+id+'/stream?t='+Date.now());
       img.style.display='block';
     }else{
       box.classList.remove('live');
@@ -129,14 +139,51 @@ function renderCameraHealth(cameras){
 async function refreshCameraHealth(){
   if(!liveMode)return;
   try{
-    const r=await fetch('/api/health',{cache:'no-store'}); if(!r.ok)return;
+    const healthUrl=remoteBase?(remoteBase+'/health?key='+encodeURIComponent(remoteAccessKey)):'/api/health'; const r=await fetch(healthUrl,{cache:'no-store'}); if(!r.ok)return;
     const h=await r.json(); renderCameraHealth(h.cameras||[]);
     cameraMode.textContent=h.online_count+' of '+h.camera_count+' configured cameras online';
     const side=document.querySelector('.side'); if(side)side.innerHTML='<span class="dot"></span>'+h.online_count+' / '+h.camera_count+' cameras online<br><br>Local gateway active';
   }catch(e){}
 }
+function loadRemoteSettings(){
+  const hash=new URLSearchParams(location.hash.replace(/^#/,''));
+  const hashGateway=hash.get('gateway'), hashKey=hash.get('key');
+  if(hashGateway&&hashKey){
+    localStorage.setItem('cctv_remote_gateway',hashGateway.replace(/\/$/,''));
+    localStorage.setItem('cctv_remote_key',hashKey);
+    history.replaceState(null,'',location.pathname+location.search);
+  }
+  remoteBase=(localStorage.getItem('cctv_remote_gateway')||'').replace(/\/$/,'');
+  remoteAccessKey=localStorage.getItem('cctv_remote_key')||'';
+  if(document.getElementById('remoteGateway'))remoteGateway.value=remoteBase;
+  if(document.getElementById('remoteKey'))remoteKey.value=remoteAccessKey;
+}
+async function connectRemote(){
+  const g=remoteGateway.value.trim().replace(/\/$/,'');
+  const k=remoteKey.value.trim();
+  if(!g||!k){remoteMessage.textContent='Enter the tunnel URL and access key.';return;}
+  if(!g.startsWith('https://')){remoteMessage.textContent='Remote gateway must use HTTPS.';return;}
+  remoteBase=g; remoteAccessKey=k;
+  localStorage.setItem('cctv_remote_gateway',g);
+  localStorage.setItem('cctv_remote_key',k);
+  remoteMessage.textContent='Connecting…';
+  try{
+    const r=await fetch(remoteBase+'/health?key='+encodeURIComponent(remoteAccessKey),{cache:'no-store'});
+    if(!r.ok)throw new Error('Connection rejected');
+    const h=await r.json();
+    liveMode=true; renderCameraHealth(h.cameras||[]);
+    modePill.textContent='● REMOTE LIVE';
+    subtitle.textContent='Secure remote four-camera analytics';
+    cameraMode.textContent=h.online_count+' of '+h.camera_count+' configured cameras online';
+    remoteMessage.textContent='Connected securely.';
+    await loadLiveHistory(period);
+  }catch(e){remoteMessage.textContent='Could not connect. Check the tunnel URL and access key.';}
+}
+remoteConnect.onclick=connectRemote;
+loadRemoteSettings();
 async function checkGateway(){
   try{
+    if(remoteBase&&remoteAccessKey){await connectRemote();return;}
     const r=await fetch('/api/health',{cache:'no-store'}); if(!r.ok)return;
     const h=await r.json(); if(!h.ok)return;
     liveMode=true;
@@ -148,7 +195,7 @@ async function checkGateway(){
     await loadLiveHistory('today');
     setInterval(refreshLive,2000);
     setInterval(refreshCameraHealth,5000);
-  }catch(e){}
+  }catch(e){if(location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){modePill.textContent='● REMOTE SETUP';subtitle.textContent='Open Cameras to connect the shop gateway securely';}}
 }
 
 </script>
