@@ -16,6 +16,8 @@ DETECT_EVERY = max(1, int(os.getenv("DETECT_EVERY", "2")))
 DETECTION_CONFIDENCE = float(os.getenv("DETECTION_CONFIDENCE", "0.30"))
 COUNT_LINE_Y = float(os.getenv("COUNT_LINE_Y", "0.60"))
 COUNT_HYSTERESIS = float(os.getenv("COUNT_HYSTERESIS", "0.06"))
+PASS_MOVEMENT_RATIO = float(os.getenv("PASS_MOVEMENT_RATIO", "0.035"))
+PASS_MIN_TRACK_SECONDS = float(os.getenv("PASS_MIN_TRACK_SECONDS", "0.35"))
 STOPPED_SECONDS = int(os.getenv("STOPPED_SECONDS", "240"))
 ENABLE_PLATE_OCR = os.getenv("ENABLE_PLATE_OCR", "false").lower() == "true"
 YOLO_MODEL = os.getenv("YOLO_MODEL", "yolo11n.pt")
@@ -127,6 +129,10 @@ class CameraWorker:
         self.ocr = None
         self.frame_no = 0
         self.prev_side = {}
+        self.first_pos = {}
+        self.first_seen = {}
+        self.counted_tracks = set()
+        self.last_seen = {}
         self.last_detections = []
         self.current_people = 0
         self.current_vehicles = 0
@@ -318,38 +324,54 @@ class CameraWorker:
                 if track_id is None:
                     continue
 
-                # Stable-side counting with a dead-band around the line.
-                # This avoids missed counts from one-frame jumps and avoids
-                # double-counting when an object jitters on the line.
+                # "Passed" now means a unique tracked person/vehicle moved
+                # meaningfully within this camera. No line crossing is required.
+                # Each track contributes at most one count per camera.
+                now = time.time()
+                self.last_seen[track_id] = now
+                self.first_pos.setdefault(track_id, (cx, cy))
+                self.first_seen.setdefault(track_id, now)
+
+                fx, fy = self.first_pos[track_id]
+                movement = ((cx - fx) ** 2 + (cy - fy) ** 2) ** 0.5
+                movement_threshold = max(18.0, ((w * w + h * h) ** 0.5) * PASS_MOVEMENT_RATIO)
+                age = now - self.first_seen[track_id]
+
+                if (
+                    track_id not in self.counted_tracks
+                    and age >= PASS_MIN_TRACK_SECONDS
+                    and movement >= movement_threshold
+                ):
+                    self.counted_tracks.add(track_id)
+
+                    if object_type == "person":
+                        self.people_passed += 1
+                    else:
+                        self.vehicles_passed += 1
+                        self.vehicle_types[object_type] += 1
+
+                    direction = "moving"
+                    if abs(cy - fy) >= abs(cx - fx):
+                        direction = "inbound" if cy > fy else "outbound"
+                    else:
+                        direction = "right" if cx > fx else "left"
+
+                    event = {
+                        "time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "camera": self.camera_id,
+                        "type": object_type,
+                        "track_id": track_id,
+                        "direction": direction,
+                        "confidence": round(float(confidence), 3),
+                    }
+                    self.events.appendleft(event)
+                    save_event(event)
+
+                # Keep the previous side only for the visual counting guide.
                 if cy < upper:
-                    stable_side = -1
+                    self.prev_side[track_id] = -1
                 elif cy > lower:
-                    stable_side = 1
-                else:
-                    stable_side = 0
-
-                previous_side = self.prev_side.get(track_id)
-
-                if stable_side != 0:
-                    if previous_side in (-1, 1) and previous_side != stable_side:
-                        if object_type == "person":
-                            self.people_passed += 1
-                        else:
-                            self.vehicles_passed += 1
-                            self.vehicle_types[object_type] += 1
-
-                        event = {
-                            "time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                            "camera": self.camera_id,
-                            "type": object_type,
-                            "track_id": track_id,
-                            "direction": "inbound" if stable_side == 1 else "outbound",
-                            "confidence": round(float(confidence), 3),
-                        }
-                        self.events.appendleft(event)
-                        save_event(event)
-
-                    self.prev_side[track_id] = stable_side
+                    self.prev_side[track_id] = 1
 
                 if is_vehicle:
                     previous_position = self.last_pos.get(track_id)
@@ -392,6 +414,19 @@ class CameraWorker:
                         self.try_plate_ocr(
                             frame, x1, y1, x2, y2, object_type, track_id
                         )
+
+            # Drop stale tracker bookkeeping after 2 minutes.
+            now = time.time()
+            stale = [tid for tid, ts in self.last_seen.items() if now - ts > 120]
+            for tid in stale:
+                self.last_seen.pop(tid, None)
+                self.first_pos.pop(tid, None)
+                self.first_seen.pop(tid, None)
+                self.prev_side.pop(tid, None)
+                self.last_pos.pop(tid, None)
+                self.still_since.pop(tid, None)
+                self.incident_latched.discard(tid)
+                self.counted_tracks.discard(tid)
 
             self.last_detections = fresh_detections
             self.last_inference_at = time.strftime("%Y-%m-%d %H:%M:%S")
