@@ -85,7 +85,7 @@ document.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>{document.qu
 apply.onclick=()=>{let d=Math.max(1,(new Date(to.value)-new Date(from.value))/86400000+1);period='custom';if(liveMode)loadLiveHistory('custom',from.value,to.value);else{stats(d*.98,d+' day range');draw(d<=2?'today':d<=10?'week':d<=60?'month':'year')}};
 connect.onclick=()=>modal.classList.add('show');close.onclick=()=>modal.classList.remove('show');
 let now=new Date();to.value=now.toISOString().slice(0,10);now.setDate(now.getDate()-6);from.value=now.toISOString().slice(0,10);
-incidents();tables();stats();clock();checkGateway();setInterval(clock,1000);setInterval(sim,3000);
+incidents();tables();stats();clock();setInterval(clock,1000);setInterval(sim,3000);
 function renderLiveData(d,label){
   people.textContent=fmt(d.people_passed||0); vehicles.textContent=fmt(d.vehicles_passed||0); plates.textContent=fmt(d.readable_plates||0); incidentCount.textContent=fmt(d.major_incidents||0);
   rate.textContent=((d.vehicles_passed||0)>0?((d.readable_plates||0)/(d.vehicles_passed||1)*100):0).toFixed(1)+'%';
@@ -125,7 +125,7 @@ function renderCameraHealth(cameras){
     status.classList.toggle('online',!!cam.online);
     if(cam.configured){
       box.classList.add('live');
-      if(!img.src) img.src=remoteBase?(remoteBase+'/cameras/'+id+'/stream?key='+encodeURIComponent(remoteAccessKey)+'&t='+Date.now()):('/api/cameras/'+id+'/stream?t='+Date.now());
+      const wanted=remoteBase?(remoteBase+'/cameras/'+id+'/stream?key='+encodeURIComponent(remoteAccessKey)):('/api/cameras/'+id+'/stream'); if(!img.src||!img.src.startsWith(wanted))img.src=wanted+(wanted.includes('?')?'&':'?')+'t='+Date.now();
       img.style.display='block';
     }else{
       box.classList.remove('live');
@@ -151,7 +151,7 @@ function loadRemoteSettings(){
   if(hashGateway&&hashKey){
     localStorage.setItem('cctv_remote_gateway',hashGateway.replace(/\/$/,''));
     localStorage.setItem('cctv_remote_key',hashKey);
-    history.replaceState(null,'',location.pathname+location.search);
+    window.history.replaceState(null,'',location.pathname+location.search);
   }
   remoteBase=(localStorage.getItem('cctv_remote_gateway')||'').replace(/\/$/,'');
   remoteAccessKey=localStorage.getItem('cctv_remote_key')||'';
@@ -177,10 +177,12 @@ async function connectRemote(){
     cameraMode.textContent=h.online_count+' of '+h.camera_count+' configured cameras online';
     remoteMessage.textContent='Connected securely.';
     await loadLiveHistory(period);
+    if(!window.cctvRemoteTimers){window.cctvRemoteTimers=true;setInterval(refreshLive,2000);setInterval(refreshCameraHealth,5000);}
   }catch(e){remoteMessage.textContent='Could not connect. Check the tunnel URL and access key.';}
 }
 remoteConnect.onclick=connectRemote;
 loadRemoteSettings();
+checkGateway();
 async function checkGateway(){
   try{
     if(remoteBase&&remoteAccessKey){await connectRemote();return;}
