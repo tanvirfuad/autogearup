@@ -431,6 +431,8 @@ class CameraWorker:
 
                 track["last_center"] = (cx, cy)
 
+        return tracked
+
     def draw_overlay(self, frame):
         h, _ = frame.shape[:2]
         for det in self.last_detections:
@@ -558,6 +560,65 @@ class BatchAnalyticsEngine:
             name="shared-batch-analytics",
         ).start()
 
+    def maybe_plate_ocr(self, worker, frame, tracked):
+        if self.ocr is None:
+            return
+
+        now = time.time()
+        for det in tracked:
+            if det["type"] not in VEHICLE_CLASSES:
+                continue
+
+            tid = det.get("track_id")
+            if tid is None:
+                continue
+
+            track = worker.tracker.tracks.get(tid)
+            if not track:
+                continue
+
+            if now - track.get("last_plate_ocr", 0.0) < PLATE_OCR_INTERVAL:
+                continue
+            track["last_plate_ocr"] = now
+
+            x1, y1, x2, y2 = map(int, det["box"])
+            vh = max(1, y2 - y1)
+            # Most plates are in the lower half of the vehicle bounding box.
+            crop = frame[y1 + vh // 2:y2, x1:x2]
+            if crop.size == 0:
+                continue
+
+            try:
+                with self.ocr_lock:
+                    reads = self.ocr.readtext(crop, detail=1, paragraph=False)
+            except Exception:
+                continue
+
+            for _, text_value, score in reads:
+                clean = re.sub(r"[^A-Z0-9]", "", str(text_value).upper())
+                if not (4 <= len(clean) <= 8 and float(score) >= 0.50):
+                    continue
+
+                duplicate = any(
+                    p.get("plate") == clean and p.get("track_id") == tid
+                    for p in list(worker.plates)[:20]
+                )
+                if duplicate:
+                    break
+
+                plate_event = {
+                    "time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "camera": worker.camera_id,
+                    "plate": clean,
+                    "confidence": round(float(score), 3),
+                    "vehicle_type": det["type"],
+                    "track_id": tid,
+                }
+                worker.readable_plates += 1
+                worker.plates.appendleft(plate_event)
+                save_plate(plate_event)
+                break
+
     def run(self):
         self.load_model()
         if self.model is None:
@@ -627,7 +688,8 @@ class BatchAnalyticsEngine:
 
                         worker.analytics_running = True
                         worker.model_name = self.model_name
-                        worker.consume_detections(detections, frame)
+                        tracked = worker.consume_detections(detections, frame)
+                        self.maybe_plate_ocr(worker, frame, tracked)
 
                 except Exception as e:
                     self.last_error = str(e)
