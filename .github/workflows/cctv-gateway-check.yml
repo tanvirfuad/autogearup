@@ -1,0 +1,26 @@
+name: CCTV Gateway Check
+
+on:
+  push:
+    paths:
+      - "cctv-analytics-demo/gateway/**"
+      - ".github/workflows/cctv-gateway-check.yml"
+  pull_request:
+    paths:
+      - "cctv-analytics-demo/gateway/**"
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile gateway
+        run: |
+          python -m py_compile cctv-analytics-demo/gateway/app.py
+          python -m py_compile cctv-analytics-demo/gateway/public_proxy.py
+          python -m py_compile cctv-analytics-demo/gateway/export_tensorrt.py
