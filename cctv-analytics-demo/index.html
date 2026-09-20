@@ -83,8 +83,8 @@ function renderLiveData(d,label){
   const order=['car','truck','bus','motorcycle'];
   types.innerHTML=order.map(k=>'<div class="type"><span>'+k.toUpperCase()+'</span><b>'+fmt(vt[k]||0)+'</b><div class="meter"><i style="width:'+Math.min(100,((vt[k]||0)/total)*100)+'%"></i></div></div>').join('');
   typePeriod.textContent=label||'Live';
-  const pmap={}; (d.latest_plates||[]).forEach(p=>pmap[p.track_id]=p);
-  rows=(d.latest_events||[]).slice(0,8).map(e=>{const p=pmap[e.track_id];return[(e.time||'').split(' ').pop()||'', e.camera_name||('Camera '+e.camera), (e.type||'').replace(/^./,x=>x.toUpperCase()), p?p.plate:'—', Math.round((e.confidence||0)*100)+'%', (e.direction||'').replace(/^./,x=>x.toUpperCase())]});
+  const pmap={}; (d.latest_plates||[]).forEach(p=>pmap[p.camera+':'+p.track_id]=p);
+  rows=(d.latest_events||[]).slice(0,8).map(e=>{const p=pmap[e.camera+':'+e.track_id];return[(e.time||'').split(' ').pop()||'', e.camera_name||('Camera '+e.camera), (e.type||'').replace(/^./,x=>x.toUpperCase()), p?p.plate:'—', Math.round((e.confidence||0)*100)+'%', (e.direction||'').replace(/^./,x=>x.toUpperCase())]});
   tables();
   const incidentRows=d.incidents||[];
   if(incidentRows.length){const h=incidentRows.map(x=>'<div class="alert"><div class="ico">⚠</div><div><b>'+((x.type||'incident').replaceAll('_',' '))+'</b><p>'+(x.camera_name||('Camera '+x.camera))+' · '+(x.description||'')+'</p></div><time>'+((x.time||'').split(' ').pop()||'')+'</time></div>').join('');alerts.innerHTML=h;incidentAll.innerHTML=h;}
