@@ -64,3 +64,10 @@ For a temporary externally shareable live dashboard:
 The relay exposes only camera health, historical analytics, and the four browser-safe MJPEG streams. It does not expose the RTSP URLs, `.env`, SQLite database file, or local filesystem.
 
 The Quick Tunnel URL changes whenever the tunnel is restarted. For a stable production URL, replace the Quick Tunnel with a named Cloudflare Tunnel and a hostname you control.
+
+
+## 16-30 camera optimization
+
+The gateway now uses a **single shared batched detector** for all configured RTSP streams rather than loading a YOLO model per camera. It supports environment entries up through `CAMERA32_RTSP_URL`.
+
+See `SCALING.md` for architecture, tuning, and the optional TensorRT path. AutoGearUp continues to store event metadata only; Lorex remains the video recorder.
