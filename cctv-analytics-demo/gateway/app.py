@@ -15,7 +15,11 @@ load_dotenv()
 DETECT_EVERY = max(1, int(os.getenv("DETECT_EVERY", "2")))
 ANALYTICS_INTERVAL = max(0.08, float(os.getenv("ANALYTICS_INTERVAL", "0.25")))
 RECOGNITION_PROFILE = os.getenv("RECOGNITION_PROFILE", "accurate").strip().lower()
-DETECTION_CONFIDENCE = float(os.getenv("DETECTION_CONFIDENCE", "0.20"))
+_requested_confidence = os.getenv("DETECTION_CONFIDENCE", "").strip()
+if RECOGNITION_PROFILE == "accurate" and _requested_confidence in ("", "0.30"):
+    DETECTION_CONFIDENCE = 0.20
+else:
+    DETECTION_CONFIDENCE = float(_requested_confidence or "0.25")
 DETECTION_IMGSZ = max(640, int(os.getenv("DETECTION_IMGSZ", "960")))
 TRACKER_CONFIG = os.getenv("TRACKER_CONFIG", "bytetrack.yaml").strip() or "bytetrack.yaml"
 COUNT_LINE_Y = float(os.getenv("COUNT_LINE_Y", "0.60"))
