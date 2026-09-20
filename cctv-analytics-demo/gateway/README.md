@@ -56,3 +56,21 @@ The public GitHub Pages version remains a simulator. The live version is served 
 ## Security
 
 Do not put usernames, passwords, RTSP URLs containing credentials, or private network configuration into GitHub. Keep them in `.env` only.
+
+
+## Multiple cameras
+
+The dashboard now includes a Camera Connections screen.
+
+1. Start the gateway with `start-windows.bat`.
+2. Open `http://localhost:8000`.
+3. Click **Cameras**.
+4. Enter a camera name.
+5. Paste the full RTSP URL exactly as you would in VLC.
+6. Click **Add Camera**.
+
+The gateway stores camera connections locally in `cctv.db` and starts them again after a restart. Camera credentials are never returned to the browser after saving; the UI only displays a masked connection string.
+
+If an older installation already has `CAMERA_RTSP_URL` in `.env`, it is imported once as **Camera 1** automatically. Future cameras can be added from the dashboard without editing `.env`.
+
+Removing a camera from the dashboard stops that worker and removes its saved connection. Historical event records remain in the local analytics database.
