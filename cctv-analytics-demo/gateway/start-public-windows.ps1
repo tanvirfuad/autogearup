@@ -98,7 +98,8 @@ try {
         foreach ($cam in $health.cameras) {
             $ai = if ($cam.analytics_enabled) { 'AI ON' } else { 'AI OFF' }
             $online = if ($cam.online) { 'ONLINE' } else { ($cam.status).ToUpper() }
-            Write-Host ('Camera ' + $cam.id + ' - ' + $cam.name + ': ' + $online + ' | ' + $ai + ' | Now: ' + $cam.current_people + ' people / ' + $cam.current_vehicles + ' vehicles')
+            $modelText = if ($cam.model) { $cam.model } else { 'no model' }
+            Write-Host ('Camera ' + $cam.id + ' - ' + $cam.name + ': ' + $online + ' | ' + $ai + ' | ' + $modelText + ' | Now: ' + $cam.current_people + ' people / ' + $cam.current_vehicles + ' vehicles')
         }
         if (-not $health.analytics_enabled) {
             Write-Host ''
