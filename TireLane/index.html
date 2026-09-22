@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TireLane — Buy Tires Online. Install Locally.</title>
+  <meta name="description" content="Draft online tire marketplace with local installation booking." />
+  <style>
+    :root{--ink:#101114;--muted:#696d75;--line:#e7e8ea;--panel:#f6f7f8;--accent:#1f7a4f;--accent2:#0f5d3b;--white:#fff;--shadow:0 18px 60px rgba(0,0,0,.09)}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:#fff;line-height:1.45}
+    a{text-decoration:none;color:inherit} button,input,select{font:inherit}
+    .topbar{background:#0e1114;color:#fff;text-align:center;padding:9px 16px;font-size:13px}
+    .nav{height:76px;display:flex;align-items:center;justify-content:space-between;max-width:1180px;margin:auto;padding:0 22px;border-bottom:1px solid var(--line)}
+    .brand{font-size:25px;font-weight:900;letter-spacing:-.8px}.brand span{color:var(--accent)}
+    .navlinks{display:flex;gap:28px;font-size:14px;color:#353941}.navright{display:flex;gap:12px;align-items:center}
+    .btn{border:0;border-radius:10px;padding:13px 18px;font-weight:750;cursor:pointer;transition:.18s}.btn:hover{transform:translateY(-1px)}
+    .btn-primary{background:var(--accent);color:#fff}.btn-dark{background:#111;color:#fff}.btn-light{background:#fff;border:1px solid var(--line)}
+    .hero{background:linear-gradient(135deg,#f1f5f3 0%,#fff 64%);padding:68px 22px 72px;border-bottom:1px solid var(--line)}
+    .hero-inner{max-width:1180px;margin:auto;display:grid;grid-template-columns:1.08fr .92fr;gap:54px;align-items:center}
+    h1{font-size:58px;line-height:1.02;letter-spacing:-2.8px;margin:0 0 20px;max-width:760px}.lead{font-size:19px;color:var(--muted);max-width:620px;margin:0 0 26px}
+    .checks{display:flex;flex-wrap:wrap;gap:16px 22px;font-size:14px;color:#40444c}.check:before{content:'✓';color:var(--accent);font-weight:900;margin-right:7px}
+    .search-card{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:24px}
+    .tabs{display:grid;grid-template-columns:1fr 1fr;background:#f0f1f2;border-radius:11px;padding:4px;margin-bottom:20px}.tab{border:0;background:transparent;padding:11px;border-radius:8px;font-weight:750;cursor:pointer;color:#5d626b}.tab.active{background:#fff;color:#111;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:12px;font-weight:800;color:#5f646b;text-transform:uppercase;letter-spacing:.55px}.field select,.field input{width:100%;border:1px solid #dfe1e4;border-radius:10px;padding:13px 12px;background:#fff;outline:none}.field select:focus,.field input:focus{border-color:#8cbda4;box-shadow:0 0 0 3px rgba(31,122,79,.09)}
+    .search-card .btn{width:100%;margin-top:16px;padding:15px}.smallnote{font-size:12px;color:#81858c;text-align:center;margin-top:10px}
+    .section{max-width:1180px;margin:auto;padding:70px 22px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:26px}.eyebrow{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1.25px;color:var(--accent)}h2{font-size:38px;letter-spacing:-1.4px;margin:6px 0 0}.section-sub{color:var(--muted);max-width:540px}
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.step{border:1px solid var(--line);border-radius:16px;padding:24px;background:#fff}.num{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#e8f3ed;color:var(--accent2);font-weight:900;margin-bottom:16px}.step h3{margin:0 0 7px;font-size:18px}.step p{margin:0;color:var(--muted);font-size:14px}
+    .product-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.product{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;position:relative}.badge{position:absolute;top:12px;left:12px;background:#111;color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:6px 9px}.tire-visual{height:178px;background:linear-gradient(150deg,#f1f2f4,#fff);display:grid;place-items:center}.tire{width:116px;height:116px;border:26px solid #202327;border-radius:50%;box-shadow:inset 0 0 0 7px #44484e,0 14px 25px rgba(0,0,0,.12)}
+    .product-body{padding:17px}.brandname{font-size:12px;font-weight:850;color:#6d7178;text-transform:uppercase;letter-spacing:.5px}.product h3{font-size:17px;margin:5px 0 4px}.spec{font-size:13px;color:var(--muted)}.rating{font-size:12px;margin:10px 0;color:#555}.price{font-size:24px;font-weight:900}.per{font-size:12px;color:var(--muted)}.install{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13px}.install strong{color:var(--accent)}
+    .feature{background:#101214;color:#fff;border-radius:24px;display:grid;grid-template-columns:1fr 1fr;overflow:hidden}.feature-copy{padding:48px}.feature h2{font-size:40px;margin:0 0 12px}.feature p{color:#c4c7cc;max-width:540px}.feature-list{display:grid;gap:12px;margin:24px 0}.feature-list div:before{content:'✓';display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--accent);margin-right:9px;font-weight:900}.feature-side{background:linear-gradient(135deg,#1f7a4f,#103c2a);padding:42px;display:grid;align-content:center}.pricebox{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:17px;padding:25px;backdrop-filter:blur(8px)}.pricebox h3{font-size:22px;margin:0 0 18px}.lineitem{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.15)}.total{display:flex;justify-content:space-between;padding-top:18px;font-size:22px;font-weight:900}
+    .locations{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.location{border:1px solid var(--line);border-radius:15px;padding:20px}.location .city{font-size:18px;font-weight:850}.location p{margin:6px 0 16px;color:var(--muted);font-size:13px}.pill{display:inline-block;border-radius:999px;background:#eef6f2;color:var(--accent2);padding:6px 9px;font-size:11px;font-weight:850}
+    .cta{background:#f2f5f3;border:1px solid #e0e7e2;border-radius:22px;padding:42px;display:flex;justify-content:space-between;align-items:center;gap:20px}.cta h2{margin:0 0 8px}.footer{border-top:1px solid var(--line);padding:36px 22px;color:#6d7178;font-size:13px}.footer-inner{max-width:1180px;margin:auto;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+    .drawer{position:fixed;inset:0;background:rgba(0,0,0,.46);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}.drawer.open{display:flex}.modal{background:#fff;border-radius:18px;max-width:600px;width:100%;padding:28px;box-shadow:var(--shadow)}.modal h3{font-size:25px;margin:0 0 10px}.modal p{color:var(--muted)}.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}.result{background:#f5f7f6;border-radius:12px;padding:16px;margin:16px 0}.result strong{color:var(--accent2)}
+    .mobile-menu{display:none}
+    @media(max-width:900px){.navlinks{display:none}.mobile-menu{display:inline-flex}.hero-inner{grid-template-columns:1fr}.hero{padding-top:44px}h1{font-size:44px}.product-grid{grid-template-columns:1fr 1fr}.locations{grid-template-columns:1fr 1fr}.feature{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.section{padding-top:54px;padding-bottom:54px}}
+    @media(max-width:600px){.nav{height:66px;padding:0 15px}.brand{font-size:22px}.navright .btn-light{display:none}.hero{padding:34px 15px 48px}h1{font-size:38px;letter-spacing:-1.8px}.lead{font-size:17px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.section{padding:46px 15px}.section-head{display:block}h2{font-size:31px}.product-grid,.locations{grid-template-columns:1fr}.tire-visual{height:150px}.cta{padding:27px;display:block}.cta .btn{margin-top:14px;width:100%}.feature-copy,.feature-side{padding:28px}.feature h2{font-size:32px}.checks{display:grid;gap:8px}}
+  </style>
+</head>
+<body>
+  <div class="topbar">Draft concept • Buy online, install locally • Sample pricing only</div>
+  <nav class="nav">
+    <a class="brand" href="#">Tire<span>Lane</span></a>
+    <div class="navlinks">
+      <a href="#shop">Shop Tires</a><a href="#how">How It Works</a><a href="#install">Installation</a><a href="#locations">Locations</a>
+    </div>
+    <div class="navright"><button class="btn btn-light" onclick="openCart()">Cart · 0</button><button class="btn btn-primary" onclick="document.getElementById('shop').scrollIntoView({behavior:'smooth'})">Find Tires</button><button class="btn btn-light mobile-menu">☰</button></div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <div>
+        <div class="eyebrow">Tires without the runaround</div>
+        <h1>Buy the right tires. Get them installed nearby.</h1>
+        <p class="lead">Compare tires, see the full installed price, choose a local installer, and book your appointment in one place.</p>
+        <div class="checks"><div class="check">Live supplier inventory ready</div><div class="check">Transparent installed pricing</div><div class="check">Local installation</div></div>
+      </div>
+      <div class="search-card" id="shop">
+        <div class="tabs"><button class="tab active" data-tab="vehicle">Shop by vehicle</button><button class="tab" data-tab="size">Shop by tire size</button></div>
+        <div id="vehicleForm" class="form-grid">
+          <div class="field"><label>Year</label><select id="year"><option>2025</option><option>2024</option><option>2023</option><option>2022</option><option>2021</option></select></div>
+          <div class="field"><label>Make</label><select id="make"><option>Toyota</option><option>Honda</option><option>Ford</option><option>Tesla</option><option>BMW</option></select></div>
+          <div class="field"><label>Model</label><select id="model"><option>RAV4</option><option>Corolla</option><option>Camry</option><option>Highlander</option></select></div>
+          <div class="field"><label>Trim</label><select id="trim"><option>LE AWD</option><option>XLE AWD</option><option>Limited AWD</option></select></div>
+        </div>
+        <div id="sizeForm" class="form-grid" style="display:none">
+          <div class="field"><label>Width</label><select><option>225</option><option>235</option><option>245</option><option>255</option></select></div>
+          <div class="field"><label>Aspect Ratio</label><select><option>65</option><option>60</option><option>55</option><option>50</option></select></div>
+          <div class="field full"><label>Wheel Diameter</label><select><option>17</option><option>18</option><option>19</option><option>20</option></select></div>
+        </div>
+        <button class="btn btn-primary" onclick="showResults()">Search available tires</button>
+        <div class="smallnote">No payment required in this demo.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="how">
+    <div class="section-head"><div><div class="eyebrow">Simple by design</div><h2>From tire search to installed.</h2></div><p class="section-sub">The site is designed to make the complete installed price more important than the tire-only price.</p></div>
+    <div class="steps"><div class="step"><div class="num">1</div><h3>Find your fitment</h3><p>Search by vehicle or tire size. Show compatible options only.</p></div><div class="step"><div class="num">2</div><h3>Compare installed price</h3><p>Tire price, installation, balancing and optional alignment are visible upfront.</p></div><div class="step"><div class="num">3</div><h3>Choose a shop & time</h3><p>Select a nearby location, reserve the tires, and book installation online.</p></div></div>
+  </section>
+
+  <section class="section" style="padding-top:8px">
+    <div class="section-head"><div><div class="eyebrow">Sample catalog</div><h2>Popular all-season tires</h2></div><a href="#shop" style="font-weight:800;color:var(--accent)">View all tires →</a></div>
+    <div class="product-grid">
+      <article class="product"><div class="badge">Best value</div><div class="tire-visual"><div class="tire"></div></div><div class="product-body"><div class="brandname">General</div><h3>Altimax RT45</h3><div class="spec">225/65R17 · All Season</div><div class="rating">★★★★★ 4.7</div><div><span class="price">$169</span> <span class="per">/ tire</span></div><div class="install"><strong>$839 installed</strong> · set of 4</div></div></article>
+      <article class="product"><div class="tire-visual"><div class="tire"></div></div><div class="product-body"><div class="brandname">Continental</div><h3>TrueContact Tour 54</h3><div class="spec">225/65R17 · All Season</div><div class="rating">★★★★★ 4.8</div><div><span class="price">$196</span> <span class="per">/ tire</span></div><div class="install"><strong>$947 installed</strong> · set of 4</div></div></article>
+      <article class="product"><div class="badge">Premium</div><div class="tire-visual"><div class="tire"></div></div><div class="product-body"><div class="brandname">Michelin</div><h3>Defender 2</h3><div class="spec">225/65R17 · All Season</div><div class="rating">★★★★★ 4.9</div><div><span class="price">$229</span> <span class="per">/ tire</span></div><div class="install"><strong>$1,079 installed</strong> · set of 4</div></div></article>
+      <article class="product"><div class="badge">Budget</div><div class="tire-visual"><div class="tire"></div></div><div class="product-body"><div class="brandname">Nexen</div><h3>N'Priz AH8</h3><div class="spec">225/65R17 · All Season</div><div class="rating">★★★★☆ 4.4</div><div><span class="price">$139</span> <span class="per">/ tire</span></div><div class="install"><strong>$719 installed</strong> · set of 4</div></div></article>
+    </div>
+  </section>
+
+  <section class="section" id="install">
+    <div class="feature">
+      <div class="feature-copy"><div class="eyebrow" style="color:#72d4a2">No checkout surprises</div><h2>Sell the installed package, not just the tire.</h2><p>A customer can immediately see what the complete transaction costs and add high-value services without calling the shop.</p><div class="feature-list"><div>Mounting & balancing</div><div>TPMS service</div><div>Wheel alignment</div><div>Seasonal tire storage</div></div><button class="btn btn-primary" onclick="openCart()">See booking flow</button></div>
+      <div class="feature-side"><div class="pricebox"><h3>Your installed package</h3><div class="lineitem"><span>4 × General Altimax RT45</span><strong>$676</strong></div><div class="lineitem"><span>Mount & balance</span><strong>$120</strong></div><div class="lineitem"><span>TPMS service</span><strong>$28</strong></div><div class="lineitem"><span>Alignment</span><strong>$99</strong></div><div class="lineitem"><span>Tire disposal</span><strong>$16</strong></div><div class="total"><span>Total</span><span>$939</span></div></div></div>
+    </div>
+  </section>
+
+  <section class="section" id="locations" style="padding-top:0">
+    <div class="section-head"><div><div class="eyebrow">Installation network</div><h2>Choose a nearby installer.</h2></div><p class="section-sub">These are sample GTA locations for the prototype. Real locations, hours and appointment inventory can be connected later.</p></div>
+    <div class="locations"><div class="location"><div class="city">Ajax</div><p>Sample installer location<br>Same/next-day availability</p><span class="pill">Installation + Alignment</span></div><div class="location"><div class="city">Scarborough</div><p>Sample installer location<br>Body & mechanical services</p><span class="pill">Installation + Storage</span></div><div class="location"><div class="city">Etobicoke</div><p>Sample installer location<br>Full mechanical service</p><span class="pill">Installation + Alignment</span></div><div class="location"><div class="city">Thornhill</div><p>Sample installer location<br>ADAS & EV capable</p><span class="pill">Installation + ADAS</span></div></div>
+  </section>
+
+  <section class="section" style="padding-top:0"><div class="cta"><div><div class="eyebrow">Draft MVP</div><h2>Ready for distributor inventory + online booking.</h2><div class="section-sub">Next step: connect live tire inventory, actual shop locations, Stripe checkout, appointment capacity and customer notifications.</div></div><button class="btn btn-dark" onclick="showResults()">Try tire search</button></div></section>
+
+  <footer class="footer"><div class="footer-inner"><div><strong style="color:#111">TireLane</strong> · Working name for prototype</div><div>Privacy · Terms · Returns · Road Hazard · Contact</div><div>© 2026 Prototype</div></div></footer>
+
+  <div class="drawer" id="modal"><div class="modal"><h3 id="modalTitle">Tires found</h3><p id="modalText">We found compatible tires for your vehicle.</p><div class="result" id="modalResult"><strong>24 tires available</strong><br>Starting at $139/tire · Installation from $120/set</div><div class="modal-actions"><button class="btn btn-light" onclick="closeModal()">Close</button><button class="btn btn-primary" onclick="bookDemo()">Continue</button></div></div></div>
+
+  <script>
+    const tabs=document.querySelectorAll('.tab');
+    tabs.forEach(t=>t.addEventListener('click',()=>{tabs.forEach(x=>x.classList.remove('active'));t.classList.add('active');const v=t.dataset.tab==='vehicle';document.getElementById('vehicleForm').style.display=v?'grid':'none';document.getElementById('sizeForm').style.display=v?'none':'grid';}));
+    function showResults(){const modal=document.getElementById('modal');document.getElementById('modalTitle').textContent='24 compatible tires found';document.getElementById('modalText').textContent='Sample results for your search. In production, this would query live supplier inventory and pricing.';document.getElementById('modalResult').innerHTML='<strong>Best installed price: $719</strong><br>4 tires + mounting & balancing · 4 nearby installation locations';modal.classList.add('open')}
+    function openCart(){const modal=document.getElementById('modal');document.getElementById('modalTitle').textContent='Booking flow preview';document.getElementById('modalText').textContent='A production checkout would reserve supplier inventory, collect payment/deposit and book a shop appointment.';document.getElementById('modalResult').innerHTML='<strong>1. Choose tires → 2. Choose installer → 3. Pick time → 4. Pay → 5. Confirmation</strong><br><br>Add-ons can include alignment, TPMS, seasonal storage and recommended vehicle services.';modal.classList.add('open')}
+    function closeModal(){document.getElementById('modal').classList.remove('open')}
+    function bookDemo(){document.getElementById('modalTitle').textContent='Choose an installation location';document.getElementById('modalText').textContent='Ajax · Scarborough · Etobicoke · Thornhill';document.getElementById('modalResult').innerHTML='<strong>Sample availability</strong><br>Tomorrow 9:00 AM · 11:30 AM · 2:00 PM · 4:30 PM';}
+    document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()})
+  </script>
+</body>
+</html>
